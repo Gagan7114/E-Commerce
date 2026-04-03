@@ -15,7 +15,7 @@ export default function PlatformDashboard() {
         supabase.from(config.tables.inventory).select('*', { count: 'exact', head: true }),
         supabase.from(config.tables.secondarySells).select('*', { count: 'exact', head: true }),
         supabase.from(config.tables.masterPO).select('*', { count: 'exact', head: true })
-          .eq(config.poFilterColumn, config.poFilterValue),
+          .ilike(config.poFilterColumn, `%${config.poFilterValue}%`),
         supabase.from(config.tables.dispatches).select('*', { count: 'exact', head: true })
           .eq('platform', config.slug).eq('status', 'loading'),
       ])

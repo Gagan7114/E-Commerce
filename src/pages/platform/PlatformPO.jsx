@@ -33,16 +33,18 @@ export default function PlatformPO() {
   const loadPOs = useCallback(async (page, search) => {
     setPOLoading(true)
 
+    const filterPattern = `%${config.poFilterValue}%`
+
     let query = supabase
       .from(config.tables.masterPO)
       .select('*', { count: 'exact' })
-      .ilike(config.poFilterColumn, config.poFilterValue)
+      .ilike(config.poFilterColumn, filterPattern)
 
     if (search) {
       query = supabase
         .from(config.tables.masterPO)
         .select('*', { count: 'exact' })
-        .ilike(config.poFilterColumn, config.poFilterValue)
+        .ilike(config.poFilterColumn, filterPattern)
         .or(
           `po_number.ilike.%${search}%,` +
           `po_id.ilike.%${search}%,` +
@@ -59,7 +61,7 @@ export default function PlatformPO() {
       const { data: d2, count: c2 } = await supabase
         .from(config.tables.masterPO)
         .select('*', { count: 'exact' })
-        .ilike(config.poFilterColumn, config.poFilterValue)
+        .ilike(config.poFilterColumn, filterPattern)
         .range(from, from + PAGE_SIZE - 1)
       setPOs(d2 || [])
       setPOTotal(c2 || 0)
