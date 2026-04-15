@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { usePlatform } from '../../context/PlatformContext'
-import { supabase } from '../../lib/supabase'
+import { platformAPI } from '../../lib/api'
 
 const PAGE_SIZE = 50
 
@@ -16,10 +16,9 @@ export default function PlatformPO() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
 
   const [selectedPO, setSelectedPO] = useState(null)
-  const [stockMatch, setStockMatch] = useState(null) // matched inventory row
+  const [stockMatch, setStockMatch] = useState(null)
   const [stockLoading, setStockLoading] = useState(false)
 
-  // Debounce search
   const handleSearch = (val) => {
     setPOSearch(val)
     clearTimeout(searchTimer.current)
@@ -29,45 +28,19 @@ export default function PlatformPO() {
     }, 400)
   }
 
-  // Load POs
   const loadPOs = useCallback(async (page, search) => {
     setPOLoading(true)
-
-    const filterPattern = `%${config.poFilterValue}%`
-
-    let query = supabase
-      .from(config.tables.masterPO)
-      .select('*', { count: 'exact' })
-      .ilike(config.poFilterColumn, filterPattern)
-
-    if (search) {
-      query = supabase
-        .from(config.tables.masterPO)
-        .select('*', { count: 'exact' })
-        .ilike(config.poFilterColumn, filterPattern)
-        .or(
-          `po_number.ilike.%${search}%,` +
-          `po_id.ilike.%${search}%,` +
-          `order_id.ilike.%${search}%,` +
-          `product_name.ilike.%${search}%,` +
-          `sku_code.ilike.%${search}%`
-        )
-    }
-
-    const from = page * PAGE_SIZE
-    const { data, count, error } = await query.range(from, from + PAGE_SIZE - 1)
-
-    if (error) {
-      const { data: d2, count: c2 } = await supabase
-        .from(config.tables.masterPO)
-        .select('*', { count: 'exact' })
-        .ilike(config.poFilterColumn, filterPattern)
-        .range(from, from + PAGE_SIZE - 1)
-      setPOs(d2 || [])
-      setPOTotal(c2 || 0)
-    } else {
-      setPOs(data || [])
-      setPOTotal(count || 0)
+    try {
+      const result = await platformAPI.getPOs(config.slug, {
+        page,
+        page_size: PAGE_SIZE,
+        search,
+      })
+      setPOs(result.data || [])
+      setPOTotal(result.count || 0)
+    } catch {
+      setPOs([])
+      setPOTotal(0)
     }
     setPOLoading(false)
   }, [config])
@@ -79,20 +52,14 @@ export default function PlatformPO() {
   // When PO is selected, fetch matching inventory by sku_code
   useEffect(() => {
     if (!selectedPO) { setStockMatch(null); return }
-
     const skuValue = selectedPO[config.matchColumn]
     if (!skuValue) { setStockMatch(null); return }
 
     setStockLoading(true)
-    supabase
-      .from(config.tables.inventory)
-      .select('*')
-      .eq(config.matchColumn, skuValue)
-      .range(0, 0)
-      .then(({ data }) => {
-        setStockMatch(data && data.length > 0 ? data[0] : null)
-        setStockLoading(false)
-      })
+    platformAPI.getInventoryMatch(config.slug, skuValue)
+      .then((result) => setStockMatch(result.match || null))
+      .catch(() => setStockMatch(null))
+      .finally(() => setStockLoading(false))
   }, [selectedPO, config])
 
   const poDisplayCols = pos.length > 0 ? Object.keys(pos[0]) : []
@@ -102,7 +69,6 @@ export default function PlatformPO() {
 
   const totalPoPages = Math.ceil(poTotal / PAGE_SIZE)
 
-  // Stock comparison logic
   const poQty = selectedPO && poQtyCol ? Number(selectedPO[poQtyCol]) || 0 : 0
   const invQtyCol = stockMatch ? Object.keys(stockMatch).find((c) => /qty|quantity|stock|available/i.test(c)) : null
   const invQty = invQtyCol ? Number(stockMatch[invQtyCol]) || 0 : 0
@@ -163,9 +129,7 @@ export default function PlatformPO() {
 
           {/* Right: Stock Comparison */}
           <div className="plat-po-panel">
-            <div className="plat-po-panel-header">
-              Stock Comparison
-            </div>
+            <div className="plat-po-panel-header">Stock Comparison</div>
             <div className="plat-po-panel-body">
               {!selectedPO ? (
                 <div className="plat-empty">Select a PO to compare stock</div>
@@ -173,7 +137,6 @@ export default function PlatformPO() {
                 <div className="plat-empty"><div className="loader" /> Checking inventory...</div>
               ) : (
                 <>
-                  {/* PO Details */}
                   <div style={{ marginBottom: '16px', padding: '14px', background: '#f8f9fc', borderRadius: '10px' }}>
                     <div style={{ fontWeight: 700, fontSize: '15px', marginBottom: '8px', color: '#2d3436' }}>
                       PO: {selectedPO[poNameCol]}
@@ -202,7 +165,6 @@ export default function PlatformPO() {
                     )}
                   </div>
 
-                  {/* Comparison Result */}
                   <div className={`plat-comparison-result ${stockStatus}`}>
                     {stockStatus === 'none' ? (
                       <>
@@ -239,7 +201,6 @@ export default function PlatformPO() {
                     )}
                   </div>
 
-                  {/* Inventory Details */}
                   {stockMatch && (
                     <div style={{ marginTop: '16px', padding: '14px', background: '#f8f9fc', borderRadius: '10px' }}>
                       <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '8px', color: '#636e72' }}>

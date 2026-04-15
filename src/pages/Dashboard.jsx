@@ -673,6 +673,19 @@ export default function Dashboard() {
 
           <div className="nav-divider" />
 
+          {/* SAP section */}
+          {isOpen && <div className="nav-section-title">SAP B1</div>}
+          <Link
+            to="/distributors"
+            className="nav-platform-link"
+            title={!isOpen ? 'Distributors' : ''}
+          >
+            <span className="nav-icon nav-platform-fallback" style={{ background: '#6c5ce7', color: '#fff', display: 'flex' }}>D</span>
+            {isOpen && <span className="nav-label">Distributors</span>}
+          </Link>
+
+          <div className="nav-divider" />
+
           {/* Platform Apps in sidebar */}
           {isOpen && <div className="nav-section-title">Platform Apps</div>}
           {getAllPlatforms().map((p) => (

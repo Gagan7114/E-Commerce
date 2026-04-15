@@ -29,6 +29,7 @@ export default function PlatformLayout() {
     { to: `/platform/${slug}/po`, label: 'PO & Stock' },
     { to: `/platform/${slug}/truck-loading`, label: 'Truck Loading' },
     { to: `/platform/${slug}/dispatches`, label: 'Dispatches' },
+    { to: `/platform/${slug}/distributors`, label: 'Distributors' },
   ]
 
   return (

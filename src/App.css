@@ -57,6 +57,24 @@ body {
 
 .form-group { margin-bottom: 16px; }
 
+.password-wrapper { position: relative; }
+.password-wrapper input { padding-right: 64px; }
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #0984e3;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.password-toggle:hover { background: #f1f3f5; }
+
 .form-group label {
   display: block;
   margin-bottom: 6px;
@@ -1961,6 +1979,67 @@ body {
 .plat-truck-fill-progress.yellow { background: linear-gradient(90deg, #f39c12, #f1c40f); }
 .plat-truck-fill-progress.red { background: linear-gradient(90deg, #e74c3c, #c0392b); }
 
+/* Mode Switcher */
+.plat-mode-switcher {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.plat-mode-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 18px 16px;
+  border: 2px solid #eef0f4;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s ease;
+}
+
+.plat-mode-btn:hover {
+  border-color: var(--platform-color, #667eea);
+  transform: translateY(-2px);
+}
+
+.plat-mode-btn.active {
+  border-color: var(--platform-color, #667eea);
+  background: rgba(102,126,234,0.03);
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.08);
+}
+
+.plat-mode-icon {
+  font-size: 24px;
+}
+
+.plat-mode-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2d3436;
+}
+
+.plat-mode-desc {
+  font-size: 11px;
+  color: #95a5a6;
+}
+
+/* Overload Warning */
+.plat-overload-warning {
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: #fff5f5;
+  border: 1px solid rgba(231,76,60,0.2);
+  border-radius: 8px;
+  color: #e74c3c;
+  font-size: 13px;
+  font-weight: 600;
+  animation: fadeSlideUp 0.3s ease;
+}
+
 /* PO list for truck */
 .plat-truck-po-item {
   display: flex;
@@ -2138,6 +2217,247 @@ body {
 }
 
 /* Platform app links on main dashboard */
+/* ─── Distributors Page ─── */
+.dist-layout {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 20px;
+  min-height: calc(100vh - 160px);
+}
+
+.dist-list-panel {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eef0f4;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dist-list-header {
+  padding: 14px;
+  border-bottom: 1px solid #eef0f4;
+}
+
+.dist-search {
+  width: 100%;
+  padding: 9px 14px;
+  border: 1.5px solid #e0e3e8;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #2d3436;
+  background: #fafbfc;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.dist-search:focus {
+  outline: none;
+  border-color: #6c5ce7;
+  box-shadow: 0 0 0 3px rgba(108,92,231,0.08);
+  background: #fff;
+}
+
+.dist-list-body {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 300px);
+}
+
+.dist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f5f6fa;
+  transition: all 0.15s ease;
+}
+
+.dist-item:hover {
+  background: #f8f9fc;
+}
+
+.dist-item.selected {
+  background: rgba(108,92,231,0.04);
+  border-left: 3px solid #6c5ce7;
+}
+
+.dist-item-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.dist-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dist-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3436;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dist-item-sub {
+  font-size: 11px;
+  color: #95a5a6;
+  margin-top: 2px;
+}
+
+.dist-item-balance {
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.dist-item-balance .negative { color: #e74c3c; }
+.dist-item-balance .positive { color: #27ae60; }
+
+/* Detail Panel */
+.dist-detail-panel {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eef0f4;
+  overflow: hidden;
+}
+
+.dist-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border-bottom: 1px solid #eef0f4;
+}
+
+.dist-detail-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.dist-detail-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2d3436;
+  margin: 0;
+}
+
+.dist-detail-code {
+  font-size: 12px;
+  color: #95a5a6;
+  margin-top: 2px;
+}
+
+.dist-detail-status {
+  margin-left: auto;
+}
+
+/* Tabs */
+.dist-tabs {
+  display: flex;
+  border-bottom: 1px solid #eef0f4;
+  padding: 0 20px;
+}
+
+.dist-tab {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #95a5a6;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.dist-tab:hover {
+  color: #636e72;
+}
+
+.dist-tab.active {
+  color: #6c5ce7;
+  border-bottom-color: #6c5ce7;
+}
+
+.dist-tab-content {
+  padding: 20px;
+  max-height: calc(100vh - 350px);
+  overflow-y: auto;
+}
+
+.dist-info-grid {
+  display: grid;
+  gap: 0;
+}
+
+/* Address/Contact Cards */
+.dist-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.dist-address-card {
+  padding: 14px;
+  background: #f8f9fc;
+  border-radius: 10px;
+  border: 1px solid #eef0f4;
+}
+
+.dist-address-type {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6c5ce7;
+  margin-bottom: 6px;
+}
+
+.dist-address-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3436;
+  margin-bottom: 4px;
+}
+
+.dist-address-detail {
+  font-size: 12px;
+  color: #636e72;
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .dist-layout {
+    grid-template-columns: 1fr;
+  }
+  .dist-list-body {
+    max-height: 300px;
+  }
+}
+
 .plat-apps-section {
   margin-bottom: 28px;
   animation: fadeSlideUp 0.4s ease;
