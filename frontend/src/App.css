@@ -1532,6 +1532,192 @@ body {
 }
 
 /* ═══════════════════════════════
+   INVENTORY CHARTS
+   ═══════════════════════════════ */
+.charts-panel {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #eef0f4;
+  padding: 20px;
+  margin-bottom: 24px;
+  animation: fadeSlideUp 0.35s ease;
+}
+
+.charts-panel:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.charts-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.charts-panel-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2d3436;
+}
+
+.charts-summary-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.charts-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 10px;
+  background: #f0f4ff;
+  color: #667eea;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.chart-card {
+  background: #f8f9fc;
+  border-radius: 10px;
+  padding: 18px;
+  border: 1px solid #eef0f4;
+}
+
+.chart-card-full {
+  grid-column: 1 / -1;
+}
+
+.chart-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d3436;
+  margin-bottom: 14px;
+}
+
+.chart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.chart-bars::-webkit-scrollbar { width: 3px; }
+.chart-bars::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+
+.chart-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeSlideUp 0.3s ease;
+}
+
+.chart-bar-label {
+  width: 100px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #636e72;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chart-bar-label-city {
+  width: 120px;
+}
+
+.chart-bar-label-product {
+  width: 220px;
+}
+
+.chart-bar-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chart-bar-rank {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #e0e3e8;
+  color: #636e72;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chart-bar-platform-tag {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.chart-bar-product-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-bar-track {
+  flex: 1;
+  height: 20px;
+  background: #eef0f4;
+  border-radius: 6px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.chart-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 2px;
+  opacity: 0.85;
+}
+
+.chart-bar-fill:hover {
+  opacity: 1;
+}
+
+.chart-bar-value {
+  width: 70px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2d3436;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .chart-bar-label-product {
+    width: 140px;
+  }
+}
+
+/* ═══════════════════════════════
    PLATFORM APP
    ═══════════════════════════════ */
 

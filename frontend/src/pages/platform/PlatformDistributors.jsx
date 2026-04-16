@@ -21,8 +21,10 @@ export default function PlatformDistributors() {
   const [detailTab, setDetailTab] = useState('info')
   const [orders, setOrders] = useState({ data: [], count: 0 })
   const [invoices, setInvoices] = useState({ data: [], count: 0 })
+  const [salesInvoices, setSalesInvoices] = useState({ data: [], count: 0 })
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [invoicesLoading, setInvoicesLoading] = useState(false)
+  const [salesInvoicesLoading, setSalesInvoicesLoading] = useState(false)
 
   const handleSearch = (val) => {
     setSearch(val)
@@ -58,6 +60,7 @@ export default function PlatformDistributors() {
     setDetailLoading(true)
     setOrders({ data: [], count: 0 })
     setInvoices({ data: [], count: 0 })
+    setSalesInvoices({ data: [], count: 0 })
     try {
       const result = await sapAPI.getPlatformDistributorDetail(config.slug, d.CardCode)
       setDetail(result)
@@ -83,6 +86,15 @@ export default function PlatformDistributors() {
       .then((r) => setInvoices(r))
       .catch(() => {})
       .finally(() => setInvoicesLoading(false))
+  }, [detailTab, selected])
+
+  useEffect(() => {
+    if (detailTab !== 'sales-invoices' || !selected) return
+    setSalesInvoicesLoading(true)
+    sapAPI.getCustomerSalesInvoices(selected, { page: 0, page_size: 50 })
+      .then((r) => setSalesInvoices(r))
+      .catch(() => {})
+      .finally(() => setSalesInvoicesLoading(false))
   }, [detailTab, selected])
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
@@ -188,14 +200,14 @@ export default function PlatformDistributors() {
                 </div>
 
                 <div className="dist-tabs">
-                  {['info', 'addresses', 'contacts', 'orders', 'invoices'].map((tab) => (
+                  {['info', 'addresses', 'contacts', 'orders', 'invoices', 'sales-invoices'].map((tab) => (
                     <button
                       key={tab}
                       className={`dist-tab ${detailTab === tab ? 'active' : ''}`}
                       onClick={() => setDetailTab(tab)}
                       style={detailTab === tab ? { color: config.color, borderBottomColor: config.color } : undefined}
                     >
-                      {tab === 'info' ? 'Details' : tab[0].toUpperCase() + tab.slice(1)}
+                      {tab === 'info' ? 'Details' : tab === 'sales-invoices' ? 'Sales Invoices' : tab[0].toUpperCase() + tab.slice(1)}
                     </button>
                   ))}
                 </div>
@@ -206,6 +218,7 @@ export default function PlatformDistributors() {
                   {detailTab === 'contacts' && <ContactsTab contacts={detail.contacts} />}
                   {detailTab === 'orders' && <DocsTab data={orders} loading={ordersLoading} type="Purchase Order" />}
                   {detailTab === 'invoices' && <DocsTab data={invoices} loading={invoicesLoading} type="AP Invoice" />}
+                  {detailTab === 'sales-invoices' && <SalesInvoicesTab data={salesInvoices} loading={salesInvoicesLoading} />}
                 </div>
               </>
             )}
@@ -288,6 +301,48 @@ function ContactsTab({ contacts }) {
         </div>
       ))}
     </div>
+  )
+}
+
+function SalesInvoicesTab({ data, loading }) {
+  if (loading) return <div className="plat-empty"><div className="loader" /> Loading sales invoices...</div>
+  if (!data.data || data.data.length === 0) return <div className="plat-empty">No sales invoices found</div>
+  return (
+    <>
+      <div style={{ fontSize: '12px', color: '#95a5a6', marginBottom: '10px' }}>{data.count} sales invoice(s)</div>
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Doc #</th><th>Date</th><th>Due Date</th>
+              <th>Total</th><th>Paid</th><th>Balance Due</th>
+              <th>Currency</th><th>Status</th><th>Customer Ref</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.data.map((doc) => (
+              <tr key={doc.DocEntry}>
+                <td style={{ fontWeight: 600 }}>{doc.DocNum}</td>
+                <td>{doc.DocDate?.split('T')[0]}</td>
+                <td>{doc.DocDueDate?.split('T')[0]}</td>
+                <td style={{ fontWeight: 600 }}>{Number(doc.DocTotal || 0).toLocaleString()}</td>
+                <td>{Number(doc.PaidToDate || 0).toLocaleString()}</td>
+                <td style={{ fontWeight: 600, color: Number(doc.BalanceDue || 0) > 0 ? '#e74c3c' : '#27ae60' }}>
+                  {Number(doc.BalanceDue || 0).toLocaleString()}
+                </td>
+                <td>{doc.DocCur}</td>
+                <td>
+                  <span className={`plat-status ${doc.CANCELED === 'Y' ? 'loading' : doc.DocStatus === 'O' ? 'loading' : 'dispatched'}`}>
+                    {doc.CANCELED === 'Y' ? 'Cancelled' : doc.DocStatus === 'O' ? 'Open' : 'Closed'}
+                  </span>
+                </td>
+                <td>{doc.CustomerRef || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
 

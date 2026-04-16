@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { getAllPlatforms } from '../config/platforms'
+import { dashboardAPI } from '../lib/api'
 
 const SECTIONS = {
   primary: {
@@ -251,6 +252,124 @@ function getSectionKey(tableName) {
   return 'primary'
 }
 
+// ─── Inventory Charts ───
+function InventoryCharts() {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    dashboardAPI.getInventoryCharts()
+      .then(setData)
+      .catch(() => setData(null))
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="charts-panel">
+        <div className="charts-panel-header"><h3>Inventory Overview</h3></div>
+        <div className="alerts-loading"><div className="loader" /> Loading inventory data...</div>
+      </div>
+    )
+  }
+
+  if (!data) return null
+
+  const { platform_totals, city_distribution, top_products } = data
+  const maxPlatformQty = Math.max(...platform_totals.map((p) => p.total_qty), 1)
+  const maxCityQty = Math.max(...city_distribution.map((c) => c.qty), 1)
+  const maxProductQty = Math.max(...top_products.map((p) => p.qty), 1)
+  const totalStock = platform_totals.reduce((s, p) => s + p.total_qty, 0)
+  const totalSKUs = platform_totals.reduce((s, p) => s + p.sku_count, 0)
+
+  return (
+    <div className="charts-panel">
+      <div className="charts-panel-header">
+        <h3>Inventory Overview</h3>
+        <div className="charts-summary-badges">
+          <span className="charts-badge">{totalStock.toLocaleString()} total units</span>
+          <span className="charts-badge">{totalSKUs.toLocaleString()} SKU entries</span>
+        </div>
+      </div>
+
+      <div className="charts-grid">
+        {/* Platform-wise Stock */}
+        <div className="chart-card">
+          <div className="chart-card-title">Stock by Platform</div>
+          <div className="chart-bars">
+            {platform_totals.map((p) => (
+              <div key={p.platform} className="chart-bar-row">
+                <div className="chart-bar-label">
+                  <span className="chart-bar-dot" style={{ background: p.color }} />
+                  {formatLabel(p.platform)}
+                </div>
+                <div className="chart-bar-track">
+                  <div
+                    className="chart-bar-fill"
+                    style={{ width: `${(p.total_qty / maxPlatformQty) * 100}%`, background: p.color }}
+                  />
+                </div>
+                <div className="chart-bar-value">{p.total_qty.toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* City-wise Distribution */}
+        <div className="chart-card">
+          <div className="chart-card-title">Stock by City (Top 15)</div>
+          <div className="chart-bars">
+            {city_distribution.length === 0 ? (
+              <div className="plat-empty" style={{ padding: '20px' }}>No city data available</div>
+            ) : (
+              city_distribution.map((c, i) => (
+                <div key={c.city} className="chart-bar-row">
+                  <div className="chart-bar-label chart-bar-label-city">
+                    <span className="chart-bar-rank">{i + 1}</span>
+                    {c.city}
+                  </div>
+                  <div className="chart-bar-track">
+                    <div
+                      className="chart-bar-fill"
+                      style={{
+                        width: `${(c.qty / maxCityQty) * 100}%`,
+                        background: `hsl(${220 + i * 8}, 65%, ${50 + i * 2}%)`,
+                      }}
+                    />
+                  </div>
+                  <div className="chart-bar-value">{c.qty.toLocaleString()}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Top Products */}
+        <div className="chart-card chart-card-full">
+          <div className="chart-card-title">Top Products by Stock</div>
+          <div className="chart-bars">
+            {top_products.map((p, i) => (
+              <div key={`${p.platform}-${i}`} className="chart-bar-row">
+                <div className="chart-bar-label chart-bar-label-product">
+                  <span className="chart-bar-platform-tag" style={{ background: p.color }}>{p.platform[0].toUpperCase()}</span>
+                  <span className="chart-bar-product-name">{p.product}</span>
+                </div>
+                <div className="chart-bar-track">
+                  <div
+                    className="chart-bar-fill"
+                    style={{ width: `${(p.qty / maxProductQty) * 100}%`, background: p.color }}
+                  />
+                </div>
+                <div className="chart-bar-value">{p.qty.toLocaleString()}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Overview Home ───
 function OverviewHome({ tableCounts, onTableClick, loadingCounts, alerts, loadingAlerts }) {
   const totalRecords = Object.values(tableCounts).reduce((a, b) => a + b, 0)
@@ -260,6 +379,9 @@ function OverviewHome({ tableCounts, onTableClick, loadingCounts, alerts, loadin
     <div className="overview">
       {/* Alerts */}
       <AlertsPanel alerts={alerts} loading={loadingAlerts} onTableClick={onTableClick} />
+
+      {/* Inventory Charts */}
+      <InventoryCharts />
 
       {/* Summary cards */}
       <div className="summary-row">

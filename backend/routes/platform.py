@@ -5,11 +5,11 @@ router = APIRouter(prefix="/api/platform", tags=["Platform"])
 
 # Platform config (mirrors frontend config/platforms.js)
 PLATFORMS = {
-    "blinkit": {"inventory": "blinkit_inventory", "secondarySells": "blinkitSec", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "blinkit", "matchColumn": "sku_code"},
+    "blinkit": {"inventory": "blinkit_inventory", "secondarySells": "blinkitSec", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "blinkit", "matchColumn": "item_id"},
     "zepto": {"inventory": "zepto_inventory", "secondarySells": "zeptSec", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "zepto", "matchColumn": "sku_code"},
-    "jiomart": {"inventory": "jiomart_inventory", "secondarySells": "jiomartSec", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "jiomart", "matchColumn": "sku_code"},
-    "amazon": {"inventory": "amazon_inventory", "secondarySells": "amazon_sec_daily", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "amazon", "matchColumn": "sku_code"},
-    "bigbasket": {"inventory": "bigbasket_inventory", "secondarySells": "bigbasketSec", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "bigbasket", "matchColumn": "sku_code"},
+    "jiomart": {"inventory": "jiomart_inventory", "secondarySells": "jiomartSec", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "jiomart", "matchColumn": "sku_id"},
+    "amazon": {"inventory": "amazon_inventory", "secondarySells": "amazon_sec_daily", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "amazon", "matchColumn": "asin"},
+    "bigbasket": {"inventory": "bigbasket_inventory", "secondarySells": "bigbasketSec", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "big basket", "matchColumn": "sku_id"},
     "swiggy": {"inventory": "swiggy_inventory", "secondarySells": "swiggySec", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "swiggy", "matchColumn": "sku_code"},
     "flipkart": {"inventory": "all_platform_inventory", "secondarySells": "flipkartSec", "masterPO": "master_po", "dispatches": "truck_dispatches", "poFilterColumn": "format", "poFilterValue": "flipkart", "matchColumn": "sku_code"},
 }
@@ -54,9 +54,7 @@ async def platform_pos(
     if search:
         query = query.or_(
             f"po_number.ilike.%{search}%,"
-            f"po_id.ilike.%{search}%,"
-            f"order_id.ilike.%{search}%,"
-            f"product_name.ilike.%{search}%,"
+            f"sku_name.ilike.%{search}%,"
             f"sku_code.ilike.%{search}%"
         )
 

@@ -50,9 +50,10 @@ export default function PlatformPO() {
   }, [poPage, debouncedSearch, loadPOs])
 
   // When PO is selected, fetch matching inventory by sku_code
+  // PO always uses 'sku_code' column; backend maps it to the correct inventory column
   useEffect(() => {
     if (!selectedPO) { setStockMatch(null); return }
-    const skuValue = selectedPO[config.matchColumn]
+    const skuValue = selectedPO.sku_code
     if (!skuValue) { setStockMatch(null); return }
 
     setStockLoading(true)
@@ -78,7 +79,7 @@ export default function PlatformPO() {
     <>
       <div className="plat-page-header">
         <h1>PO &amp; Stock Management</h1>
-        <p>Select a PO and compare with {config.name} inventory by {config.matchColumn.replace(/_/g, ' ')}</p>
+        <p>Select a PO and compare with {config.name} inventory by sku code</p>
       </div>
       <div className="plat-content">
         <div className="plat-po-layout">
@@ -109,7 +110,7 @@ export default function PlatformPO() {
                     >
                       <div className="plat-po-item-title">{po[poNameCol] || `PO #${i + 1}`}</div>
                       <div className="plat-po-item-sub">
-                        {po[config.matchColumn] && <span>SKU: {po[config.matchColumn]} </span>}
+                        {po.sku_code && <span>SKU: {po.sku_code} </span>}
                         {poQtyCol && <span>Qty: {po[poQtyCol]} </span>}
                         {poDateCol && <span>Date: {po[poDateCol]}</span>}
                       </div>
@@ -143,7 +144,7 @@ export default function PlatformPO() {
                     </div>
                     <div className="plat-stock-row">
                       <span className="plat-stock-label">SKU Code</span>
-                      <span className="plat-stock-val neutral">{selectedPO[config.matchColumn] || 'N/A'}</span>
+                      <span className="plat-stock-val neutral">{selectedPO.sku_code || 'N/A'}</span>
                     </div>
                     {poQtyCol && (
                       <div className="plat-stock-row">
@@ -171,7 +172,7 @@ export default function PlatformPO() {
                         <div className="plat-comp-icon">&#10060;</div>
                         <div className="plat-comp-text">
                           <strong>No inventory found</strong>
-                          <span>SKU {selectedPO[config.matchColumn]} not found in {config.name} inventory</span>
+                          <span>SKU {selectedPO.sku_code} not found in {config.name} inventory</span>
                         </div>
                       </>
                     ) : stockStatus === 'sufficient' ? (

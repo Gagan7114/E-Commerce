@@ -4,7 +4,6 @@ const SHARED = {
   poFilterColumn: 'format',
   weightColumn: 'total_order_liters',
   unitColumn: 'unit_of_measure',
-  matchColumn: 'sku_code',
   truckTypes: [
     { label: '10 Ton', capacityKg: 10000 },
     { label: '15 Ton', capacityKg: 15000 },
@@ -20,7 +19,7 @@ export const PLATFORMS = {
     logo: 'https://logo.clearbit.com/blinkit.com',
     tables: { inventory: 'blinkit_inventory', secondarySells: 'blinkitSec', masterPO: SHARED.masterPO, dispatches: SHARED.dispatches },
     poFilterColumn: SHARED.poFilterColumn, poFilterValue: 'blinkit',
-    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: SHARED.matchColumn,
+    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: 'item_id',
     truckTypes: SHARED.truckTypes,
   },
   zepto: {
@@ -31,7 +30,7 @@ export const PLATFORMS = {
     logo: 'https://logo.clearbit.com/zeptonow.com',
     tables: { inventory: 'zepto_inventory', secondarySells: 'zeptSec', masterPO: SHARED.masterPO, dispatches: SHARED.dispatches },
     poFilterColumn: SHARED.poFilterColumn, poFilterValue: 'zepto',
-    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: SHARED.matchColumn,
+    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: 'sku_code',
     truckTypes: SHARED.truckTypes,
   },
   jiomart: {
@@ -42,7 +41,7 @@ export const PLATFORMS = {
     logo: 'https://logo.clearbit.com/jiomart.com',
     tables: { inventory: 'jiomart_inventory', secondarySells: 'jiomartSec', masterPO: SHARED.masterPO, dispatches: SHARED.dispatches },
     poFilterColumn: SHARED.poFilterColumn, poFilterValue: 'jiomart',
-    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: SHARED.matchColumn,
+    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: 'sku_id',
     truckTypes: SHARED.truckTypes,
   },
   amazon: {
@@ -53,7 +52,7 @@ export const PLATFORMS = {
     logo: 'https://logo.clearbit.com/amazon.in',
     tables: { inventory: 'amazon_inventory', secondarySells: 'amazon_sec_daily', masterPO: SHARED.masterPO, dispatches: SHARED.dispatches },
     poFilterColumn: SHARED.poFilterColumn, poFilterValue: 'amazon',
-    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: SHARED.matchColumn,
+    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: 'asin',
     truckTypes: SHARED.truckTypes,
   },
   bigbasket: {
@@ -63,8 +62,8 @@ export const PLATFORMS = {
     icon: 'BB',
     logo: 'https://logo.clearbit.com/bigbasket.com',
     tables: { inventory: 'bigbasket_inventory', secondarySells: 'bigbasketSec', masterPO: SHARED.masterPO, dispatches: SHARED.dispatches },
-    poFilterColumn: SHARED.poFilterColumn, poFilterValue: 'bigbasket',
-    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: SHARED.matchColumn,
+    poFilterColumn: SHARED.poFilterColumn, poFilterValue: 'big basket',
+    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: 'sku_id',
     truckTypes: SHARED.truckTypes,
   },
   swiggy: {
@@ -75,7 +74,7 @@ export const PLATFORMS = {
     logo: 'https://logo.clearbit.com/swiggy.com',
     tables: { inventory: 'swiggy_inventory', secondarySells: 'swiggySec', masterPO: SHARED.masterPO, dispatches: SHARED.dispatches },
     poFilterColumn: SHARED.poFilterColumn, poFilterValue: 'swiggy',
-    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: SHARED.matchColumn,
+    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: 'sku_code',
     truckTypes: SHARED.truckTypes,
   },
   flipkart: {
@@ -86,7 +85,7 @@ export const PLATFORMS = {
     logo: 'https://logo.clearbit.com/flipkart.com',
     tables: { inventory: 'all_platform_inventory', secondarySells: 'flipkartSec', masterPO: SHARED.masterPO, dispatches: SHARED.dispatches },
     poFilterColumn: SHARED.poFilterColumn, poFilterValue: 'flipkart',
-    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: SHARED.matchColumn,
+    weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: 'sku_code',
     truckTypes: SHARED.truckTypes,
   },
 }

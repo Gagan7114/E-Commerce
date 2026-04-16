@@ -333,6 +333,183 @@ async def get_platform_distributors(
     return {"data": data, "count": total, "page": page, "page_size": page_size}
 
 
+@router.get("/sales-invoices")
+async def get_sales_invoices(
+    search: str = Query(""),
+    page: int = Query(0, ge=0),
+    page_size: int = Query(50, ge=1, le=200),
+):
+    """Fetch A/R (sales) invoices from OINV."""
+    offset = page * page_size
+
+    where = "WHERE 1=1"
+    params = ()
+
+    if search:
+        where += (
+            " AND (T0.\"DocNum\" LIKE ? OR T0.\"CardCode\" LIKE ?"
+            " OR T0.\"CardName\" LIKE ? OR T0.\"NumAtCard\" LIKE ?)"
+        )
+        s = f"%{search}%"
+        params = (s, s, s, s)
+
+    sql = f"""
+        SELECT
+            T0."DocEntry", T0."DocNum", T0."DocDate", T0."DocDueDate", T0."TaxDate",
+            T0."CardCode", T0."CardName",
+            T0."NumAtCard" AS "CustomerRef",
+            T0."DocTotal", T0."DocTotalFC", T0."VatSum", T0."DiscSum",
+            T0."PaidToDate", T0."DocTotal" - T0."PaidToDate" AS "BalanceDue",
+            T0."DocCur", T0."DocRate",
+            T0."DocStatus", T0."CANCELED",
+            T0."Comments", T0."JrnlMemo",
+            T0."SlpCode", T0."OwnerCode",
+            T0."CreateDate", T0."UpdateDate"
+        FROM OINV T0
+        {where}
+        ORDER BY T0."DocDate" DESC
+        LIMIT {page_size} OFFSET {offset}
+    """
+    count_sql = f'SELECT COUNT(*) AS "total" FROM OINV T0 {where}'
+
+    try:
+        data = query_hana(sql, params if params else None)
+        count_result = query_hana(count_sql, params if params else None)
+        total = count_result[0]["total"] if count_result else 0
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SAP HANA error: {str(e)}")
+
+    return {"data": data, "count": total, "page": page, "page_size": page_size}
+
+
+@router.get("/sales-invoices/{card_code}")
+async def get_customer_sales_invoices(
+    card_code: str,
+    page: int = Query(0, ge=0),
+    page_size: int = Query(50, ge=1, le=200),
+):
+    """Fetch A/R invoices for a specific customer."""
+    offset = page * page_size
+    sql = f"""
+        SELECT
+            T0."DocEntry", T0."DocNum", T0."DocDate", T0."DocDueDate", T0."TaxDate",
+            T0."CardCode", T0."CardName",
+            T0."NumAtCard" AS "CustomerRef",
+            T0."DocTotal", T0."VatSum", T0."DiscSum",
+            T0."PaidToDate", T0."DocTotal" - T0."PaidToDate" AS "BalanceDue",
+            T0."DocCur", T0."DocRate",
+            T0."DocStatus", T0."CANCELED",
+            T0."Comments",
+            T0."CreateDate", T0."UpdateDate"
+        FROM OINV T0
+        WHERE T0."CardCode" = ?
+        ORDER BY T0."DocDate" DESC
+        LIMIT {page_size} OFFSET {offset}
+    """
+    count_sql = 'SELECT COUNT(*) AS "total" FROM OINV T0 WHERE T0."CardCode" = ?'
+
+    try:
+        data = query_hana(sql, (card_code,))
+        count_result = query_hana(count_sql, (card_code,))
+        total = count_result[0]["total"] if count_result else 0
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SAP HANA error: {str(e)}")
+
+    return {"data": data, "count": total, "page": page, "page_size": page_size}
+
+
+@router.get("/sales-invoice-lines/{doc_entry}")
+async def get_sales_invoice_lines(doc_entry: int):
+    """Fetch line items (INV1) for a specific sales invoice."""
+    sql = """
+        SELECT
+            T1."LineNum", T1."ItemCode", T1."Dscription" AS "ItemName",
+            T1."Quantity", T1."UnitMsr" AS "UOM",
+            T1."Price", T1."DiscPrcnt" AS "DiscountPercent",
+            T1."LineTotal", T1."VatSum" AS "LineTax",
+            T1."WhsCode" AS "Warehouse",
+            T1."TaxCode", T1."Currency",
+            T1."ShipDate"
+        FROM INV1 T1
+        WHERE T1."DocEntry" = ?
+        ORDER BY T1."LineNum"
+    """
+    header_sql = """
+        SELECT
+            T0."DocEntry", T0."DocNum", T0."DocDate", T0."DocDueDate",
+            T0."CardCode", T0."CardName",
+            T0."DocTotal", T0."VatSum", T0."DiscSum",
+            T0."PaidToDate", T0."DocTotal" - T0."PaidToDate" AS "BalanceDue",
+            T0."DocCur", T0."DocStatus", T0."CANCELED"
+        FROM OINV T0
+        WHERE T0."DocEntry" = ?
+    """
+
+    try:
+        header = query_hana(header_sql, (doc_entry,))
+        lines = query_hana(sql, (doc_entry,))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SAP HANA error: {str(e)}")
+
+    if not header:
+        raise HTTPException(status_code=404, detail="Sales invoice not found")
+
+    return {"invoice": header[0], "lines": lines}
+
+
+@router.get("/platform-sales-invoices/{slug}")
+async def get_platform_sales_invoices(
+    slug: str,
+    search: str = Query(""),
+    page: int = Query(0, ge=0),
+    page_size: int = Query(50, ge=1, le=200),
+):
+    """Fetch A/R invoices for customers linked to a specific platform."""
+    platform_where, platform_params = _build_platform_where(slug)
+
+    search_clause = ""
+    search_params = ()
+    if search:
+        search_clause = (
+            " AND (T0.\"DocNum\" LIKE ? OR T0.\"CardName\" LIKE ?"
+            " OR T0.\"NumAtCard\" LIKE ?)"
+        )
+        s = f"%{search}%"
+        search_params = (s, s, s)
+
+    where = f"""WHERE T0."CardCode" IN (
+        SELECT "CardCode" FROM OCRD WHERE {platform_where}
+    ){search_clause}"""
+    all_params = platform_params + search_params
+
+    offset = page * page_size
+    sql = f"""
+        SELECT
+            T0."DocEntry", T0."DocNum", T0."DocDate", T0."DocDueDate",
+            T0."CardCode", T0."CardName",
+            T0."NumAtCard" AS "CustomerRef",
+            T0."DocTotal", T0."VatSum", T0."DiscSum",
+            T0."PaidToDate", T0."DocTotal" - T0."PaidToDate" AS "BalanceDue",
+            T0."DocCur", T0."DocStatus", T0."CANCELED",
+            T0."Comments",
+            T0."CreateDate"
+        FROM OINV T0
+        {where}
+        ORDER BY T0."DocDate" DESC
+        LIMIT {page_size} OFFSET {offset}
+    """
+    count_sql = f'SELECT COUNT(*) AS "total" FROM OINV T0 {where}'
+
+    try:
+        data = query_hana(sql, all_params if all_params else None)
+        count_result = query_hana(count_sql, all_params if all_params else None)
+        total = count_result[0]["total"] if count_result else 0
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SAP HANA error: {str(e)}")
+
+    return {"data": data, "count": total, "page": page, "page_size": page_size}
+
+
 @router.get("/platform-distributors/{slug}/{card_code}")
 async def get_platform_distributor_detail(slug: str, card_code: str):
     """Fetch a single distributor detail within platform context."""

@@ -20,6 +20,7 @@ export const dashboardAPI = {
   getTableCounts: () => fetchAPI('/api/dashboard/table-counts'),
   getTableCount: (table) => fetchAPI(`/api/dashboard/table-count/${table}`),
   getTableData: (table, opts = {}) => fetchAPI(`/api/dashboard/table-data/${table}`, opts),
+  getInventoryCharts: () => fetchAPI('/api/dashboard/inventory-charts'),
 }
 
 // ─── Platform ───
@@ -37,6 +38,10 @@ export const sapAPI = {
   getDistributorInvoices: (cardCode, opts = {}) => fetchAPI(`/api/sap/distributor-invoices/${cardCode}`, opts),
   getItems: (opts = {}) => fetchAPI('/api/sap/items', opts),
   getStockByWarehouse: (itemCode) => fetchAPI('/api/sap/stock-by-warehouse', { item_code: itemCode }),
+  getSalesInvoices: (opts = {}) => fetchAPI('/api/sap/sales-invoices', opts),
+  getCustomerSalesInvoices: (cardCode, opts = {}) => fetchAPI(`/api/sap/sales-invoices/${cardCode}`, opts),
+  getSalesInvoiceLines: (docEntry) => fetchAPI(`/api/sap/sales-invoice-lines/${docEntry}`),
+  getPlatformSalesInvoices: (slug, opts = {}) => fetchAPI(`/api/sap/platform-sales-invoices/${slug}`, opts),
   getPlatformDistributors: (slug, opts = {}) => fetchAPI(`/api/sap/platform-distributors/${slug}`, opts),
   getPlatformDistributorDetail: (slug, cardCode) => fetchAPI(`/api/sap/platform-distributors/${slug}/${cardCode}`),
 }
