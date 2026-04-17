@@ -1,7 +1,6 @@
 import { useAuth } from '../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
 import { getAllPlatforms } from '../config/platforms'
 import { dashboardAPI } from '../lib/api'
 
@@ -19,18 +18,17 @@ const SECTIONS = {
       'amazon_sec_range',
       'bigbasketSec',
       'blinkitSec',
-      'fk_grocery_sec',
+      'fk_grocery',
       'flipkartSec',
       'jiomartSec',
       'swiggySec',
-      'zeptSec',
+      'zeptoSec',
     ],
   },
   inventory: {
     label: 'Inventory',
     color: '#00b894',
     tables: [
-      'all_platform_inventory',
       'amazon_inventory',
       'bigbasket_inventory',
       'blinkit_inventory',
@@ -53,106 +51,24 @@ function isDateValue(val) {
   return /^\d{4}-\d{2}/.test(val)
 }
 
-function buildQuery(tableName, filters) {
-  let query = supabase.from(tableName).select('*', { count: 'exact' })
-
-  if (filters.search && filters.searchColumns.length > 0) {
-    const orClauses = filters.searchColumns
-      .map((col) => `${col}.ilike.%${filters.search}%`)
-      .join(',')
-    query = query.or(orClauses)
-  }
-
-  if (filters.dateCol) {
-    if (filters.year) {
-      const start = `${filters.year}-01-01`
-      const end = `${filters.year}-12-31`
-      query = query.gte(filters.dateCol, start).lte(filters.dateCol, end + 'T23:59:59')
-    }
-    if (filters.month) {
-      const y = filters.year || new Date().getFullYear()
-      const m = String(filters.month).padStart(2, '0')
-      const lastDay = new Date(y, filters.month, 0).getDate()
-      query = query.gte(filters.dateCol, `${y}-${m}-01`).lte(filters.dateCol, `${y}-${m}-${lastDay}T23:59:59`)
-    }
-    if (filters.date) {
-      query = query.gte(filters.dateCol, filters.date).lte(filters.dateCol, filters.date + 'T23:59:59')
-    }
-  }
-
-  return query
-}
-
 async function fetchCount(tableName) {
-  const { count, error } = await supabase
-    .from(tableName)
-    .select('*', { count: 'exact', head: true })
-  if (error) return 0
-  return count || 0
+  try {
+    const res = await dashboardAPI.getTableCount(tableName)
+    return res.count || 0
+  } catch {
+    return 0
+  }
 }
 
-const DATE_COL_PATTERNS = /expir|delivery_date|deliver_by|due_date|valid_until|best_before|shelf_life|end_date|dispatch_date/i
 const ALERT_DAYS = 7
 
 async function fetchExpiryAlerts(tableName) {
-  // Get a sample row to detect date columns
-  const { data: sample } = await supabase.from(tableName).select('*').range(0, 0)
-  if (!sample || sample.length === 0) return []
-
-  const cols = Object.keys(sample[0])
-  const dateCols = cols.filter((c) => {
-    if (!DATE_COL_PATTERNS.test(c)) return false
-    // Verify the value actually looks like a date (YYYY-MM-DD)
-    const val = sample[0][c]
-    if (!val || typeof val !== 'string') return false
-    return /^\d{4}-\d{2}-\d{2}/.test(val)
-  })
-  if (dateCols.length === 0) return []
-
-  const today = new Date()
-  const soon = new Date()
-  soon.setDate(today.getDate() + ALERT_DAYS)
-  const todayStr = today.toISOString().split('T')[0]
-  const soonStr = soon.toISOString().split('T')[0]
-
-  const alerts = []
-
-  for (const col of dateCols) {
-    // Expired
-    const { data: expired, count: expiredCount } = await supabase
-      .from(tableName)
-      .select('*', { count: 'exact' })
-      .lt(col, todayStr)
-      .range(0, 4)
-    if (expiredCount > 0) {
-      alerts.push({
-        table: tableName,
-        column: col,
-        type: 'expired',
-        count: expiredCount,
-        rows: expired || [],
-      })
-    }
-
-    // Expiring soon (within 7 days)
-    const { data: expiring, count: expiringCount } = await supabase
-      .from(tableName)
-      .select('*', { count: 'exact' })
-      .gte(col, todayStr)
-      .lte(col, soonStr)
-      .range(0, 4)
-    if (expiringCount > 0) {
-      alerts.push({
-        table: tableName,
-        column: col,
-        type: 'expiring',
-        count: expiringCount,
-        rows: expiring || [],
-      })
-    }
+  try {
+    const res = await dashboardAPI.getExpiryAlerts(tableName)
+    return res.alerts || []
+  } catch {
+    return []
   }
-
-  return alerts
 }
 
 function daysUntil(dateStr) {
@@ -453,21 +369,22 @@ function PaginatedTable({ tableName }) {
   const [showExpiry, setShowExpiry] = useState(false)
   const [expiryCol, setExpiryCol] = useState('')
 
-  // Detect columns on first load
+  // Detect columns on first load via backend API
   useEffect(() => {
-    supabase.from(tableName).select('*').range(0, 0).then(({ data: sample }) => {
-      if (sample && sample.length > 0) {
-        const cols = Object.keys(sample[0])
+    dashboardAPI.getTableColumns(tableName).then((res) => {
+      if (res.columns && res.columns.length > 0) {
+        const cols = res.columns
+        const sample = res.sample || {}
         setColumns(cols)
 
         const dateCols = cols.filter((c) => {
-          const val = sample[0][c]
+          const val = sample[c]
           return isDateValue(val) || /date|expir|created|updated/i.test(c)
         })
         setDateColumns(dateCols)
 
         const txtCols = cols.filter((c) => {
-          const val = sample[0][c]
+          const val = sample[c]
           return typeof val === 'string' && !isDateValue(val)
         })
         setTextColumns(txtCols)
@@ -485,45 +402,51 @@ function PaginatedTable({ tableName }) {
       setLoading(true)
       setError(null)
 
-      const filters = {
-        search,
-        searchColumns: textColumns,
-        dateCol,
-        year: filterYear,
-        month: filterMonth,
-        date: filterDate,
+      const opts = {
+        page: p,
+        page_size: PAGE_SIZE,
       }
 
-      let query = buildQuery(tableName, filters)
-      const from = p * PAGE_SIZE
-      query = query.range(from, from + PAGE_SIZE - 1)
+      if (search && textColumns.length > 0) {
+        opts.search = search
+        opts.search_columns = textColumns.join(',')
+      }
 
-      query.then(({ data, count, error }) => {
-        if (error) {
-          setError(error.message)
+      if (dateCol) {
+        opts.date_column = dateCol
+        if (filterYear) opts.year = filterYear
+        if (filterMonth) opts.month = filterMonth
+        if (filterDate) opts.date = filterDate
+      }
+
+      dashboardAPI.getTableData(tableName, opts)
+        .then((res) => {
+          if (res.error) {
+            setError(res.error)
+            setLoading(false)
+            return
+          }
+          setData(res.data || [])
+          setTotal(res.count || 0)
+          setPage(p)
           setLoading(false)
-          return
-        }
-        setData(data || [])
-        setTotal(count || 0)
-        setPage(p)
-        setLoading(false)
-      })
+        })
+        .catch((err) => {
+          setError(err.message)
+          setLoading(false)
+        })
     },
     [tableName, search, textColumns, dateCol, filterYear, filterMonth, filterDate]
   )
 
   useEffect(() => { loadPage(0) }, [loadPage])
 
-  // Realtime
+  // Polling for updates (replaces Supabase Realtime)
   useEffect(() => {
-    const channel = supabase
-      .channel(`realtime-${tableName}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, () => {
-        loadPage(page)
-      })
-      .subscribe()
-    return () => supabase.removeChannel(channel)
+    const interval = setInterval(() => {
+      loadPage(page)
+    }, 30000) // refresh every 30 seconds
+    return () => clearInterval(interval)
   }, [tableName, page, loadPage])
 
   const clearFilters = () => {
@@ -822,6 +745,31 @@ export default function Dashboard() {
               {isOpen && <span className="nav-label">{p.name}</span>}
             </Link>
           ))}
+
+          <div className="nav-divider" />
+
+          {/* Data Upload Tools */}
+          {isOpen && <div className="nav-section-title">Data Upload</div>}
+          <a
+            href="/uploader/inventory.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-platform-link"
+            title={!isOpen ? 'Inventory Upload' : ''}
+          >
+            <span className="nav-icon nav-platform-fallback" style={{ background: '#3ECF8E', color: '#fff', display: 'flex' }}>I</span>
+            {isOpen && <span className="nav-label">Inventory Upload</span>}
+          </a>
+          <a
+            href="/uploader/secondary.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-platform-link"
+            title={!isOpen ? 'Secondary Upload' : ''}
+          >
+            <span className="nav-icon nav-platform-fallback" style={{ background: '#764ba2', color: '#fff', display: 'flex' }}>S</span>
+            {isOpen && <span className="nav-label">Secondary Upload</span>}
+          </a>
 
         </nav>
 

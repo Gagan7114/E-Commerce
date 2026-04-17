@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ' *)",
+      "Bash(curl -s \"http://127.0.0.1:8000/api/dashboard/table-count/blinkit_truck_loading\")",
+      "Bash(curl -s \"http://127.0.0.1:8000/api/dashboard/table-data/blinkit_truck_loading?page=0&page_size=3\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Rows: {len\\(d[\\\\\"data\\\\\"]\\)}, Total: {d[\\\\\"count\\\\\"]}'\\); [print\\(f'  {r[\\\\\"truck_number\\\\\"]} | {r[\\\\\"sku_name\\\\\"][:40]} | qty={r[\\\\\"loaded_qty\\\\\"]} | {r[\\\\\"status\\\\\"]}'\\) for r in d['data']]\")",
+      "Bash(cp \"/c/Users/dell/Desktop/DATA/multi-platform-inventory-entry.html\" \"/c/Users/dell/Desktop/e-com/frontend/public/uploader/inventory.html\")",
+      "Bash(cp \"/c/Users/dell/Desktop/DATA/multi-platform-secondary-entry.html\" \"/c/Users/dell/Desktop/e-com/frontend/public/uploader/secondary.html\")",
+      "Bash(cp \"/c/Users/dell/Desktop/DATA/index.html\" \"/c/Users/dell/Desktop/e-com/frontend/public/uploader/index.html\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/api/upload/batch -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(curl -s \"http://127.0.0.1:8000/api/dashboard/table-data/blinkit_truck_loading?search=TEST001&search_columns=truck_number&page_size=5\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Found: {d[\\\\\"count\\\\\"]} rows'\\)\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8000/api/upload/batch -H 'Content-Type: application/json' -d '{\"table\": \"users\", \"data\": [{\"email\": \"hack@test.com\"}], \"upsert\": false}')"
+    ]
+  }
+}

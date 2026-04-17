@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import FRONTEND_URL
-from routes import dashboard, platform, sap
+from routes import auth, dashboard, platform, sap, upload
 
 app = FastAPI(title="E-Com Platform API", version="1.0.0")
 
@@ -15,9 +15,11 @@ app.add_middleware(
 )
 
 # Routes
+app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(platform.router)
 app.include_router(sap.router)
+app.include_router(upload.router)
 
 
 @app.get("/api/health")

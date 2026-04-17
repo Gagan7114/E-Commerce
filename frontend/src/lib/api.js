@@ -20,6 +20,8 @@ export const dashboardAPI = {
   getTableCounts: () => fetchAPI('/api/dashboard/table-counts'),
   getTableCount: (table) => fetchAPI(`/api/dashboard/table-count/${table}`),
   getTableData: (table, opts = {}) => fetchAPI(`/api/dashboard/table-data/${table}`, opts),
+  getTableColumns: (table) => fetchAPI(`/api/dashboard/table-columns/${table}`),
+  getExpiryAlerts: (table) => fetchAPI(`/api/dashboard/expiry-alerts/${table}`),
   getInventoryCharts: () => fetchAPI('/api/dashboard/inventory-charts'),
 }
 

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const AuthContext = createContext({})
 
 export const useAuth = () => useContext(AuthContext)
@@ -9,32 +9,63 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // On mount, check for a saved token and validate it
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    const token = localStorage.getItem('token')
+    if (!token) {
       setLoading(false)
+      return
+    }
+    fetch(`${API_BASE}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
     })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setUser(data.user))
+      .catch(() => {
+        localStorage.removeItem('token')
+        setUser(null)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const signUp = async (email, password) => {
-    const { data, error } = await supabase.auth.signUp({ email, password })
-    return { data, error }
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) return { data: null, error: { message: data.detail || 'Registration failed' } }
+      localStorage.setItem('token', data.token)
+      setUser(data.user)
+      return { data, error: null }
+    } catch (e) {
+      return { data: null, error: { message: e.message } }
+    }
   }
 
   const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    return { data, error }
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) return { data: null, error: { message: data.detail || 'Login failed' } }
+      localStorage.setItem('token', data.token)
+      setUser(data.user)
+      return { data, error: null }
+    } catch (e) {
+      return { data: null, error: { message: e.message } }
+    }
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    return { error }
+    localStorage.removeItem('token')
+    setUser(null)
+    return { error: null }
   }
 
   return (

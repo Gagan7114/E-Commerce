@@ -3,9 +3,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Supabase
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# PostgreSQL
+PG_HOST = os.getenv("PG_HOST", "localhost")
+PG_PORT = int(os.getenv("PG_PORT", 5432))
+PG_DATABASE = os.getenv("PG_DATABASE", "ecom")
+PG_USER = os.getenv("PG_USER", "postgres")
+PG_PASSWORD = os.getenv("PG_PASSWORD", "")
+
+# JWT Auth
+JWT_SECRET = os.getenv("JWT_SECRET", "change-me-in-production-use-a-long-random-string")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", 24))
 
 # SAP HANA
 SAP_HANA_HOST = os.getenv("SAP_HANA_HOST")
