@@ -103,7 +103,7 @@ function FullLoadingWorkflow({ config, addDispatch }) {
     searchTimer.current = setTimeout(() => setDebouncedSearch(val), 400)
   }
 
-  // Read POs from Supabase
+  // Fetch available POs
   const { availablePOs, poLoading, poNameCol, poQtyCol, getPoKey } = usePOs(config, debouncedSearch, step === 'loading')
 
   const capacity = truckType?.capacityKg || 0
@@ -307,7 +307,7 @@ function FullLoadingWorkflow({ config, addDispatch }) {
             </div>
           </div>
 
-          {/* Available POs (read from Supabase) */}
+          {/* Available POs */}
           <div className="plat-truck-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0 }}>Available POs</h3>
@@ -442,7 +442,7 @@ function QuickBulkDispatch({ config, addDispatch }) {
     searchTimer.current = setTimeout(() => setDebouncedSearch(val), 400)
   }
 
-  // Read POs from Supabase
+  // Fetch available POs
   const { availablePOs, poLoading, poNameCol, poQtyCol, getPoKey } = usePOs(config, debouncedSearch, true)
 
   const togglePO = (key) => {

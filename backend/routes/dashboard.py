@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-from db.supabase_client import supabase
+from db.postgres_client import db
 from collections import defaultdict
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
@@ -19,7 +19,7 @@ ALLOWED_TABLES = [
 async def get_table_count(table_name: str):
     if table_name not in ALLOWED_TABLES:
         return {"error": "Table not allowed", "count": 0}
-    result = supabase.table(table_name).select("*", count="exact").limit(0).execute()
+    result = db.table(table_name).select("*", count="exact").limit(0).execute()
     return {"table": table_name, "count": result.count or 0}
 
 
@@ -28,7 +28,7 @@ async def get_all_table_counts():
     counts = {}
     for table in ALLOWED_TABLES:
         try:
-            result = supabase.table(table).select("*", count="exact").limit(0).execute()
+            result = db.table(table).select("*", count="exact").limit(0).execute()
             counts[table] = result.count or 0
         except Exception:
             counts[table] = 0
@@ -78,7 +78,7 @@ async def inventory_charts():
                 select_cols.append(city_col)
             cols_str = ",".join(select_cols)
 
-            result = supabase.table(table).select(cols_str, count="exact").limit(5000).execute()
+            result = db.table(table).select(cols_str, count="exact").limit(5000).execute()
             rows = result.data or []
             total_count = result.count or 0
 
@@ -158,7 +158,7 @@ async def get_table_columns(table_name: str):
     if table_name not in ALLOWED_TABLES:
         return {"error": "Table not allowed", "columns": [], "sample": None}
     try:
-        result = supabase.table(table_name).select("*").range(0, 0).execute()
+        result = db.table(table_name).select("*").range(0, 0).execute()
         if result.data and len(result.data) > 0:
             return {"columns": list(result.data[0].keys()), "sample": result.data[0]}
         return {"columns": [], "sample": None}
@@ -182,7 +182,7 @@ async def get_expiry_alerts(table_name: str):
 
     try:
         # Get a sample row to detect date columns
-        sample_result = supabase.table(table_name).select("*").range(0, 0).execute()
+        sample_result = db.table(table_name).select("*").range(0, 0).execute()
         if not sample_result.data or len(sample_result.data) == 0:
             return {"alerts": []}
 
@@ -207,7 +207,7 @@ async def get_expiry_alerts(table_name: str):
         for col in date_cols:
             # Expired
             expired_result = (
-                supabase.table(table_name)
+                db.table(table_name)
                 .select("*", count="exact")
                 .lt(col, today_str)
                 .range(0, 4)
@@ -224,7 +224,7 @@ async def get_expiry_alerts(table_name: str):
 
             # Expiring soon
             expiring_result = (
-                supabase.table(table_name)
+                db.table(table_name)
                 .select("*", count="exact")
                 .gte(col, today_str)
                 .lte(col, soon_str)
@@ -264,7 +264,7 @@ async def get_table_data(
     if table_name not in ALLOWED_TABLES:
         return {"error": "Table not allowed", "data": [], "count": 0}
 
-    query = supabase.table(table_name).select("*", count="exact")
+    query = db.table(table_name).select("*", count="exact")
 
     # Date range filter (direct from/to)
     if date_column and date_from:

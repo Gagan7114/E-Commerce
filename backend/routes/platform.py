@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-from db.supabase_client import supabase
+from db.postgres_client import db
 
 router = APIRouter(prefix="/api/platform", tags=["Platform"])
 
@@ -27,9 +27,9 @@ async def platform_stats(slug: str):
     p = get_platform(slug)
     filter_pattern = f"%{p['poFilterValue']}%"
 
-    inv = supabase.table(p["inventory"]).select("*", count="exact").limit(0).execute()
-    sells = supabase.table(p["secondarySells"]).select("*", count="exact").limit(0).execute()
-    pos = supabase.table(p["masterPO"]).select("*", count="exact").ilike(p["poFilterColumn"], filter_pattern).limit(0).execute()
+    inv = db.table(p["inventory"]).select("*", count="exact").limit(0).execute()
+    sells = db.table(p["secondarySells"]).select("*", count="exact").limit(0).execute()
+    pos = db.table(p["masterPO"]).select("*", count="exact").ilike(p["poFilterColumn"], filter_pattern).limit(0).execute()
 
     return {
         "inventory": inv.count or 0,
@@ -49,7 +49,7 @@ async def platform_pos(
     p = get_platform(slug)
     filter_pattern = f"%{p['poFilterValue']}%"
 
-    query = supabase.table(p["masterPO"]).select("*", count="exact").ilike(p["poFilterColumn"], filter_pattern)
+    query = db.table(p["masterPO"]).select("*", count="exact").ilike(p["poFilterColumn"], filter_pattern)
 
     if search:
         query = query.or_(
@@ -72,5 +72,5 @@ async def platform_pos(
 @router.get("/{slug}/inventory-match")
 async def inventory_match(slug: str, sku: str = Query(...)):
     p = get_platform(slug)
-    result = supabase.table(p["inventory"]).select("*").eq(p["matchColumn"], sku).limit(1).execute()
+    result = db.table(p["inventory"]).select("*").eq(p["matchColumn"], sku).limit(1).execute()
     return {"match": result.data[0] if result.data else None}

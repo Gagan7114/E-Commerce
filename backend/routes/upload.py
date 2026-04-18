@@ -1,12 +1,12 @@
 """
-Generic data upload endpoint — replaces direct Supabase inserts from the uploader tool.
+Generic data upload endpoint for the uploader tool.
 Supports batch INSERT and UPSERT (ON CONFLICT DO UPDATE).
 """
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
-from db.supabase_client import get_conn, put_conn
+from db.postgres_client import get_conn, put_conn
 
 router = APIRouter(prefix="/api/upload", tags=["Upload"])
 

@@ -1,5 +1,5 @@
 """
-PostgreSQL database client — drop-in replacement for the old Supabase REST wrapper.
+PostgreSQL database client with chainable query builder.
 Uses psycopg2 with a connection pool for efficient access.
 """
 
@@ -27,25 +27,25 @@ def put_conn(conn):
     _pool.putconn(conn)
 
 
-class _Result:
-    """Mimics the old Supabase result object with .data and .count."""
+class QueryResult:
+    """Holds query result data and row count."""
     def __init__(self, data, count):
         self.data = data
         self.count = count
 
 
-class PostgresTable:
+class Query:
     """
-    Chainable query builder that mirrors the old SupabaseTable API.
-    Builds a SQL SELECT query with filters, ordering, pagination.
+    Chainable SQL query builder for SELECT operations.
+    Supports filters, ordering, pagination, and exact row counts.
     """
 
     def __init__(self, table: str):
         self.table = table
         self._columns = "*"
         self._count = False
-        self._filters = []       # list of (sql_fragment, params)
-        self._or_clause = None   # raw OR clause
+        self._filters = []
+        self._or_clause = None
         self._order_col = None
         self._order_dir = "ASC"
         self._limit = None
@@ -81,7 +81,7 @@ class PostgresTable:
 
     def or_(self, clause):
         """
-        Accept a Supabase-style OR clause string like:
+        Accept a PostgREST-style OR clause string like:
           "po_number.ilike.%search%,sku_name.ilike.%search%"
         and convert it to SQL.
         """
@@ -104,7 +104,7 @@ class PostgresTable:
 
     def _parse_or_clause(self):
         """
-        Parse Supabase-style or clause:
+        Parse or clause string:
           "col.ilike.%val%,col2.ilike.%val2%"
         Returns (sql_fragment, params).
         """
@@ -113,7 +113,6 @@ class PostgresTable:
 
         parts = []
         params = []
-        # Split by comma, but handle values that contain commas carefully
         raw = self._or_clause.strip("()")
         items = raw.split(",")
 
@@ -121,7 +120,6 @@ class PostgresTable:
             item = item.strip()
             if not item:
                 continue
-            # Format: col.operator.value
             segments = item.split(".", 2)
             if len(segments) < 3:
                 continue
@@ -147,10 +145,9 @@ class PostgresTable:
         return None, []
 
     def execute(self):
-        """Build and execute the SQL query, return _Result(data, count)."""
+        """Build and execute the SQL query, return QueryResult(data, count)."""
         conn = get_conn()
         try:
-            # ── Build WHERE clause ──
             where_parts = []
             all_params = []
 
@@ -167,7 +164,6 @@ class PostgresTable:
             if where_parts:
                 where_sql = " WHERE " + " AND ".join(where_parts)
 
-            # ── Count query ──
             count = None
             if self._count:
                 count_sql = f'SELECT COUNT(*) FROM "{self.table}"{where_sql}'
@@ -175,10 +171,8 @@ class PostgresTable:
                     cur.execute(count_sql, all_params)
                     count = cur.fetchone()[0]
 
-            # ── Data query ──
             cols = self._columns if self._columns != "*" else "*"
             if cols != "*":
-                # Quote each column name
                 col_list = ", ".join(f'"{c.strip()}"' for c in cols.split(","))
             else:
                 col_list = "*"
@@ -188,7 +182,6 @@ class PostgresTable:
             if self._order_col:
                 data_sql += f' ORDER BY "{self._order_col}" {self._order_dir}'
 
-            # Pagination via range or limit
             data_params = list(all_params)
             if self._range_start is not None and self._range_end is not None:
                 limit = self._range_end - self._range_start + 1
@@ -202,11 +195,9 @@ class PostgresTable:
                 cur.execute(data_sql, data_params)
                 rows = cur.fetchall()
 
-            # Convert RealDictRow to plain dicts and handle special types
             data = []
             for row in rows:
                 d = dict(row)
-                # Convert Decimal, date, datetime etc. to JSON-safe types
                 for k, v in d.items():
                     if hasattr(v, 'isoformat'):
                         d[k] = v.isoformat()
@@ -216,14 +207,15 @@ class PostgresTable:
                         d[k] = float(v)
                 data.append(d)
 
-            return _Result(data, count)
+            return QueryResult(data, count)
         finally:
             put_conn(conn)
 
 
-class _Postgres:
+class Database:
+    """Entry point for building queries. Use db.table('name').select().execute()"""
     def table(self, name):
-        return PostgresTable(name)
+        return Query(name)
 
 
-supabase = _Postgres()
+db = Database()

@@ -1,6 +1,5 @@
 """
-JWT-based auth endpoints — replaces Supabase Auth.
-Stores users in the PostgreSQL 'users' table.
+JWT-based auth endpoints. Stores users in the PostgreSQL 'users' table.
 """
 
 import hashlib
@@ -10,9 +9,9 @@ import time
 import json
 import base64
 from fastapi import APIRouter, HTTPException, Depends, Header
-from pydantic import BaseModel, EmailStr
-from db.supabase_client import get_conn, put_conn
-from config import JWT_SECRET, JWT_ALGORITHM, JWT_EXPIRY_HOURS
+from pydantic import BaseModel
+from db.postgres_client import get_conn, put_conn
+from config import JWT_SECRET, JWT_EXPIRY_HOURS
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 

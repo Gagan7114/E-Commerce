@@ -441,7 +441,7 @@ function PaginatedTable({ tableName }) {
 
   useEffect(() => { loadPage(0) }, [loadPage])
 
-  // Polling for updates (replaces Supabase Realtime)
+  // Poll for updates every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       loadPage(page)
