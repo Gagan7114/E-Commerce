@@ -56,8 +56,8 @@ export default function Register() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>MPEMS</h1>
-        <p className="subtitle">Multi-Platform E-Commerce Management System</p>
+        <h1>ECMS</h1>
+        <p className="subtitle">E-Commerce Management System</p>
         <h2>Register</h2>
 
         {error && <div className="error-message">{error}</div>}

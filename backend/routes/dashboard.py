@@ -11,6 +11,7 @@ ALLOWED_TABLES = [
     "fk_grocery", "flipkartSec", "jiomartSec", "swiggySec", "zeptoSec",
     "amazon_inventory", "bigbasket_inventory",
     "blinkit_inventory", "jiomart_inventory", "swiggy_inventory", "zepto_inventory",
+    "all_platform_inventory",
     "blinkit_truck_loading",
 ]
 

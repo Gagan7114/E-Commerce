@@ -28,14 +28,14 @@ export default function PlatformDashboard() {
             <span className="plat-card-value">{loading ? '...' : stats.openPOs.toLocaleString()}</span>
             <span className="plat-card-label">Purchase Orders</span>
           </Link>
-          <div className="plat-card">
+          <Link to={`/platform/${config.slug}/inventory`} className="plat-card">
             <span className="plat-card-value">{loading ? '...' : stats.inventory.toLocaleString()}</span>
             <span className="plat-card-label">Inventory Items</span>
-          </div>
-          <div className="plat-card">
+          </Link>
+          <Link to={`/platform/${config.slug}/secondary-sales`} className="plat-card">
             <span className="plat-card-value">{loading ? '...' : stats.sells.toLocaleString()}</span>
             <span className="plat-card-label">Secondary Sells</span>
-          </div>
+          </Link>
           <Link to={`/platform/${config.slug}/truck-loading`} className="plat-card">
             <span className="plat-card-value">{loading ? '...' : stats.activeTrucks}</span>
             <span className="plat-card-label">Active Truck Loadings</span>

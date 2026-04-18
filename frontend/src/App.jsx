@@ -11,6 +11,8 @@ import PlatformPO from './pages/platform/PlatformPO'
 import PlatformTruckLoading from './pages/platform/PlatformTruckLoading'
 import PlatformDispatches from './pages/platform/PlatformDispatches'
 import PlatformDistributors from './pages/platform/PlatformDistributors'
+import PlatformInventory from './pages/platform/PlatformInventory'
+import PlatformSecondarySales from './pages/platform/PlatformSecondarySales'
 import Distributors from './pages/Distributors'
 import './App.css'
 
@@ -48,6 +50,8 @@ function App() {
           >
             <Route index element={<PlatformDashboard />} />
             <Route path="po" element={<PlatformPO />} />
+            <Route path="inventory" element={<PlatformInventory />} />
+            <Route path="secondary-sales" element={<PlatformSecondarySales />} />
             <Route path="truck-loading" element={<PlatformTruckLoading />} />
             <Route path="dispatches" element={<PlatformDispatches />} />
             <Route path="distributors" element={<PlatformDistributors />} />

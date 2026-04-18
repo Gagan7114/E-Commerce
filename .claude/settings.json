@@ -13,7 +13,11 @@
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'Found: {d[\\\\\"count\\\\\"]} rows'\\)\")",
       "Bash(curl -s -X POST http://127.0.0.1:8000/api/upload/batch -H 'Content-Type: application/json' -d '{\"table\": \"users\", \"data\": [{\"email\": \"hack@test.com\"}], \"upsert\": false}')",
       "Bash(python -c \"import sys,json;d=json.load\\(sys.stdin\\);print\\(f'{len\\(d\\)} tables, {sum\\(d.values\\(\\)\\):,} rows'\\)\")",
-      "Bash(curl -s http://127.0.0.1:8000/api/auth/me)"
+      "Bash(curl -s http://127.0.0.1:8000/api/auth/me)",
+      "Bash(awk 'NR<353 || NR>624' c:/Users/dell/Desktop/e-com/frontend/src/pages/Dashboard.jsx)",
+      "Bash(grep -r \"po_number\\\\|sku_name\\\\|sku_code\\\\|status\\\\|value\\\\|litres\\\\|liters\" \"c:\\\\Users\\\\dell\\\\Desktop\\\\e-com\\\\backend\" --include=\"*.py\" ! -path \"*/venv/*\")",
+      "Bash(grep -r \"item_head\\\\|PREMIUM\\\\|COMMODITY\\\\|GHEE\\\\|CANOLA\" \"c:\\\\Users\\\\dell\\\\Desktop\\\\e-com\" --include=\"*.py\" --include=\"*.js\" --include=\"*.json\" ! -path \"*/node_modules/*\" ! -path \"*/venv/*\")",
+      "Bash(grep -r \"master_po\\\\|test_master_po\" \"c:\\\\Users\\\\dell\\\\Desktop\\\\e-com\" --include=\"*.py\" --include=\"*.js\" --include=\"*.md\" ! -path \"*/node_modules/*\" ! -path \"*/venv/*\")"
     ]
   }
 }

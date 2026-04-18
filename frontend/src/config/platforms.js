@@ -28,7 +28,7 @@ export const PLATFORMS = {
     color: '#7b2ff7',
     icon: 'Z',
     logo: 'https://logo.clearbit.com/zeptonow.com',
-    tables: { inventory: 'zepto_inventory', secondarySells: 'zeptSec', masterPO: SHARED.masterPO, dispatches: SHARED.dispatches },
+    tables: { inventory: 'zepto_inventory', secondarySells: 'zeptoSec', masterPO: SHARED.masterPO, dispatches: SHARED.dispatches },
     poFilterColumn: SHARED.poFilterColumn, poFilterValue: 'zepto',
     weightColumn: SHARED.weightColumn, unitColumn: SHARED.unitColumn, matchColumn: 'sku_code',
     truckTypes: SHARED.truckTypes,
