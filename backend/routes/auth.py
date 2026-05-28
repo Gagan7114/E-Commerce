@@ -107,56 +107,72 @@ class AuthRequest(BaseModel):
 
 # ─── Endpoints ───
 
+def _serialize_user(user_row):
+    """Turn the ORM User into the JSON shape returned by /login /register /me."""
+    from permissions import user_perm_codes  # local import to avoid cycle
+    return {
+        "id": user_row.id,
+        "email": user_row.email,
+        "is_superuser": bool(user_row.is_superuser),
+        "is_active": bool(user_row.is_active),
+        "groups": [g.name for g in user_row.groups],
+        "permissions": sorted(user_perm_codes(user_row)),
+    }
+
+
 @router.post("/register")
 async def register(body: AuthRequest):
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            # Check if user exists
-            cur.execute('SELECT id FROM users WHERE email = %s', (body.email,))
-            if cur.fetchone():
-                raise HTTPException(status_code=400, detail="Email already registered")
-            # Insert new user
-            pw_hash = _hash_password(body.password)
-            cur.execute(
-                'INSERT INTO users (email, password_hash) VALUES (%s, %s) RETURNING id',
-                (body.email, pw_hash),
-            )
-            user_id = cur.fetchone()[0]
-            conn.commit()
-        # Return token
+    from db.sqlalchemy_db import SessionLocal
+    from models.app_models import User as UserORM
+
+    email = body.email.strip().lower()
+    with SessionLocal() as session:
+        if session.query(UserORM).filter(UserORM.email == email).first():
+            raise HTTPException(status_code=400, detail="Email already registered")
+        user = UserORM(
+            email=email,
+            password_hash=_hash_password(body.password),
+            is_superuser=False,
+            is_active=True,
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
         token = _create_jwt({
-            "sub": user_id,
-            "email": body.email,
+            "sub": user.id,
+            "email": user.email,
             "exp": time.time() + JWT_EXPIRY_HOURS * 3600,
         })
-        return {"user": {"id": user_id, "email": body.email}, "token": token}
-    finally:
-        put_conn(conn)
+        return {"user": _serialize_user(user), "token": token}
 
 
 @router.post("/login")
 async def login(body: AuthRequest):
-    conn = get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute('SELECT id, email, password_hash FROM users WHERE email = %s', (body.email,))
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(status_code=401, detail="Invalid email or password")
-            user_id, email, pw_hash = row
-            if not _verify_password(body.password, pw_hash):
-                raise HTTPException(status_code=401, detail="Invalid email or password")
+    from db.sqlalchemy_db import SessionLocal
+    from models.app_models import User as UserORM
+
+    email = body.email.strip().lower()
+    with SessionLocal() as session:
+        user = session.query(UserORM).filter(UserORM.email == email).first()
+        if not user or not _verify_password(body.password, user.password_hash):
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Account disabled")
         token = _create_jwt({
-            "sub": user_id,
-            "email": email,
+            "sub": user.id,
+            "email": user.email,
             "exp": time.time() + JWT_EXPIRY_HOURS * 3600,
         })
-        return {"user": {"id": user_id, "email": email}, "token": token}
-    finally:
-        put_conn(conn)
+        return {"user": _serialize_user(user), "token": token}
 
 
 @router.get("/me")
 async def me(user=Depends(get_current_user)):
-    return {"user": user}
+    from db.sqlalchemy_db import SessionLocal
+    from models.app_models import User as UserORM
+
+    with SessionLocal() as session:
+        u = session.get(UserORM, user["id"])
+        if not u or not u.is_active:
+            raise HTTPException(status_code=401, detail="User not found or disabled")
+        return {"user": _serialize_user(u)}

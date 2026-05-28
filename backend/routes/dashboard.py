@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from db.postgres_client import db
 from collections import defaultdict
+from permissions import require_perm
 
 router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
@@ -8,7 +9,7 @@ router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 ALLOWED_TABLES = [
     "master_po", "test_master_po",
     "amazon_sec_daily", "amazon_sec_range", "bigbasketSec", "blinkitSec",
-    "fk_grocery", "flipkartSec", "jiomartSec", "swiggySec", "zeptoSec",
+    "flipkart_grocery_master", "fk_grocery", "flipkartSec", "jiomartSec", "swiggySec", "zeptoSec",
     "amazon_inventory", "bigbasket_inventory",
     "blinkit_inventory", "jiomart_inventory", "swiggy_inventory", "zepto_inventory",
     "all_platform_inventory",
@@ -16,7 +17,7 @@ ALLOWED_TABLES = [
 ]
 
 
-@router.get("/table-count/{table_name}")
+@router.get("/table-count/{table_name}", dependencies=[Depends(require_perm("dashboard.table.view"))])
 async def get_table_count(table_name: str):
     if table_name not in ALLOWED_TABLES:
         return {"error": "Table not allowed", "count": 0}
@@ -24,7 +25,7 @@ async def get_table_count(table_name: str):
     return {"table": table_name, "count": result.count or 0}
 
 
-@router.get("/table-counts")
+@router.get("/table-counts", dependencies=[Depends(require_perm("dashboard.view"))])
 async def get_all_table_counts():
     counts = {}
     for table in ALLOWED_TABLES:
@@ -56,7 +57,7 @@ def _is_code(name: str) -> bool:
     return False
 
 
-@router.get("/inventory-charts")
+@router.get("/inventory-charts", dependencies=[Depends(require_perm("dashboard.view"))])
 async def inventory_charts():
     """Aggregate inventory data across all platforms for dashboard charts."""
     platform_totals = []
@@ -153,7 +154,7 @@ async def inventory_charts():
     }
 
 
-@router.get("/table-columns/{table_name}")
+@router.get("/table-columns/{table_name}", dependencies=[Depends(require_perm("dashboard.table.view"))])
 async def get_table_columns(table_name: str):
     """Return column names and a sample row for a table (for frontend column detection)."""
     if table_name not in ALLOWED_TABLES:
@@ -167,7 +168,7 @@ async def get_table_columns(table_name: str):
         return {"columns": [], "sample": None}
 
 
-@router.get("/expiry-alerts/{table_name}")
+@router.get("/expiry-alerts/{table_name}", dependencies=[Depends(require_perm("dashboard.view"))])
 async def get_expiry_alerts(table_name: str):
     """Scan a table for expired / expiring-soon rows based on date columns."""
     import re
@@ -246,7 +247,7 @@ async def get_expiry_alerts(table_name: str):
         return {"alerts": []}
 
 
-@router.get("/table-data/{table_name}")
+@router.get("/table-data/{table_name}", dependencies=[Depends(require_perm("dashboard.table.view"))])
 async def get_table_data(
     table_name: str,
     page: int = Query(0, ge=0),
@@ -266,27 +267,28 @@ async def get_table_data(
         return {"error": "Table not allowed", "data": [], "count": 0}
 
     query = db.table(table_name).select("*", count="exact")
+    query_date_column = "real_date" if table_name == "flipkart_grocery_master" and date_column == "date" else date_column
 
     # Date range filter (direct from/to)
-    if date_column and date_from:
-        query = query.gte(date_column, date_from)
-    if date_column and date_to:
-        query = query.lte(date_column, date_to)
+    if query_date_column and date_from:
+        query = query.gte(query_date_column, date_from)
+    if query_date_column and date_to:
+        query = query.lte(query_date_column, date_to)
 
     # Year / month / date filters (used by frontend buildQuery)
-    if date_column and year and not date_from and not date_to:
-        query = query.gte(date_column, f"{year}-01-01")
-        query = query.lte(date_column, f"{year}-12-31T23:59:59")
-    if date_column and month:
+    if query_date_column and year and not date_from and not date_to:
+        query = query.gte(query_date_column, f"{year}-01-01")
+        query = query.lte(query_date_column, f"{year}-12-31T23:59:59")
+    if query_date_column and month:
         import calendar
         y = year or str(__import__('datetime').datetime.now().year)
         m = str(month).zfill(2)
         last_day = calendar.monthrange(int(y), int(month))[1]
-        query = query.gte(date_column, f"{y}-{m}-01")
-        query = query.lte(date_column, f"{y}-{m}-{last_day}T23:59:59")
-    if date_column and date and not date_from and not date_to:
-        query = query.gte(date_column, date)
-        query = query.lte(date_column, f"{date}T23:59:59")
+        query = query.gte(query_date_column, f"{y}-{m}-01")
+        query = query.lte(query_date_column, f"{y}-{m}-{last_day}T23:59:59")
+    if query_date_column and date and not date_from and not date_to:
+        query = query.gte(query_date_column, date)
+        query = query.lte(query_date_column, f"{date}T23:59:59")
 
     # Expiry filter
     if expiry_column and expiry_before:
@@ -298,6 +300,9 @@ async def get_table_data(
         or_clause = ",".join([f"{col}.ilike.%{search}%" for col in cols])
         if or_clause:
             query = query.or_(or_clause)
+
+    if table_name == "flipkart_grocery_master":
+        query = query.order("real_date", ascending=True)
 
     # Pagination
     start = page * page_size

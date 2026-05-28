@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePlatform } from '../../context/PlatformContext'
 import { useDispatch } from '../../context/DispatchContext'
 
@@ -6,9 +6,12 @@ const PAGE_SIZE = 20
 
 export default function PlatformDispatches() {
   const config = usePlatform()
-  const { getByPlatform, deleteDispatch, clearAll } = useDispatch()
+  const { loadByPlatform, getByPlatform, getState, deleteDispatch, clearAll } = useDispatch()
+
+  useEffect(() => { loadByPlatform(config.slug) }, [config.slug, loadByPlatform])
 
   const allDispatches = getByPlatform(config.slug)
+  const { loading, error } = getState(config.slug)
   const total = allDispatches.length
 
   const [page, setPage] = useState(0)
@@ -17,16 +20,22 @@ export default function PlatformDispatches() {
   const totalPages = Math.ceil(total / PAGE_SIZE)
   const dispatches = allDispatches.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
-  const handleDelete = (id) => {
-    if (window.confirm('Delete this dispatch record?')) {
-      deleteDispatch(id)
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this dispatch record?')) return
+    try {
+      await deleteDispatch(id, config.slug)
+    } catch (err) {
+      window.alert(`Failed to delete: ${err.message}`)
     }
   }
 
-  const handleClearAll = () => {
-    if (window.confirm(`Delete all dispatch records for ${config.name}?`)) {
-      clearAll(config.slug)
+  const handleClearAll = async () => {
+    if (!window.confirm(`Delete all dispatch records for ${config.name}?`)) return
+    try {
+      await clearAll(config.slug)
       setPage(0)
+    } catch (err) {
+      window.alert(`Failed to clear: ${err.message}`)
     }
   }
 
@@ -50,7 +59,11 @@ export default function PlatformDispatches() {
             </div>
           )}
 
-          {dispatches.length === 0 ? (
+          {loading && dispatches.length === 0 ? (
+            <div className="table-status"><div className="loader" /> Loading dispatches...</div>
+          ) : error ? (
+            <div className="table-status error">Error: {error}</div>
+          ) : dispatches.length === 0 ? (
             <div className="table-status">No dispatches yet</div>
           ) : (
             <>
@@ -143,7 +156,7 @@ export default function PlatformDispatches() {
           )}
 
           <div style={{ padding: '12px 16px', fontSize: '11px', color: '#b2bec3', borderTop: '1px solid #eef0f4' }}>
-            Dispatch history is stored locally in your browser. Data will persist across sessions but is not synced to server.
+            Dispatch history is stored in the database (table: truck_dispatches) and shared across all users.
           </div>
         </div>
       </div>

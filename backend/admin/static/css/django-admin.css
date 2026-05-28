@@ -1,0 +1,410 @@
+/* ============================================================
+   Django-admin-style skin for sqladmin.
+   Keeps sqladmin's left-sidebar layout intact; only applies
+   Django's palette, typography, and component polish.
+   ============================================================ */
+
+:root {
+  --dj-primary: #417690;
+  --dj-primary-dark: #205067;
+  --dj-accent: #79aec8;
+  --dj-accent-dark: #609ab6;
+  --dj-secondary: #264b5d;
+  --dj-link: #447e9b;
+  --dj-link-hover: #036;
+  --dj-body-bg: #f8f8f8;
+  --dj-body-fg: #333;
+  --dj-border: #e5e5e5;
+  --dj-soft-border: #eee;
+  --dj-muted: #666;
+  --dj-delete: #ba2121;
+  --dj-row-alt: #f9f9f9;
+  --dj-row-hover: #f5faff;
+}
+
+/* ---------- force light theme regardless of Tabler dark mode ---------- */
+html,
+html[data-bs-theme="dark"],
+html[data-bs-theme] body,
+body {
+  background: var(--dj-body-bg) !important;
+  color: var(--dj-body-fg) !important;
+  font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans",
+               Verdana, Arial, sans-serif !important;
+  font-size: 14px !important;
+}
+
+a, a:visited {
+  color: var(--dj-link);
+  text-decoration: none;
+}
+a:hover, a:focus {
+  color: var(--dj-link-hover);
+  text-decoration: underline;
+}
+
+/* ---------- left sidebar = Django-style dark teal ---------- */
+aside.navbar-vertical {
+  background: var(--dj-primary) !important;
+  border-right: none !important;
+  box-shadow: 1px 0 0 rgba(0,0,0,0.05);
+}
+aside.navbar-vertical .navbar-brand,
+aside.navbar-vertical .navbar-brand a,
+aside.navbar-vertical .navbar-brand h3 {
+  color: #fff !important;
+  font-weight: 300 !important;
+  font-size: 18px !important;
+  letter-spacing: 0.5px;
+}
+aside.navbar-vertical .navbar-brand {
+  padding: 16px 18px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+  margin-bottom: 6px;
+}
+
+/* nav items in sidebar */
+aside.navbar-vertical .nav-link {
+  color: rgba(255,255,255,0.92) !important;
+  padding: 10px 18px !important;
+  font-size: 13.5px !important;
+  border-radius: 0 !important;
+}
+aside.navbar-vertical .nav-link .nav-link-icon {
+  color: rgba(255,255,255,0.7) !important;
+  margin-right: 10px;
+}
+aside.navbar-vertical .nav-link:hover,
+aside.navbar-vertical .nav-link.active {
+  background: rgba(255,255,255,0.12) !important;
+  color: #fff !important;
+}
+
+/* category header (uppercase, dimmer) */
+aside.navbar-vertical .dropdown-toggle {
+  text-transform: uppercase;
+  font-size: 11.5px !important;
+  letter-spacing: 0.6px;
+  color: rgba(255,255,255,0.65) !important;
+  font-weight: 600;
+  padding-top: 14px !important;
+}
+aside.navbar-vertical .dropdown-toggle::after { display: none; }
+
+/* children list under a category */
+aside.navbar-vertical .dropdown-menu.show {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  position: static !important;
+  float: none !important;
+}
+aside.navbar-vertical .dropdown-menu .nav-link {
+  padding-left: 34px !important;
+  color: rgba(255,255,255,0.88) !important;
+  font-size: 13px !important;
+}
+aside.navbar-vertical .dropdown-menu .nav-link.active {
+  background: var(--dj-primary-dark) !important;
+  border-left: 3px solid var(--dj-accent);
+  padding-left: 31px !important;
+}
+
+/* logout button bottom of sidebar */
+aside.navbar-vertical a[href*="logout"] {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  padding: 6px 14px !important;
+  border-radius: 3px !important;
+  margin: 12px 16px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+aside.navbar-vertical a[href*="logout"]:hover {
+  background: rgba(255,255,255,0.15) !important;
+}
+
+/* ---------- main page area ---------- */
+.page-wrapper {
+  background: var(--dj-body-bg) !important;
+}
+
+/* Django-style breadcrumbs strip */
+.dj-breadcrumbs {
+  background: #fff;
+  border-bottom: 1px solid var(--dj-border);
+  padding: 10px 28px;
+  font-size: 12px;
+  color: var(--dj-muted);
+}
+.dj-breadcrumbs a { color: var(--dj-link); }
+.dj-breadcrumbs .separator { margin: 0 6px; color: #bbb; }
+
+.page-header {
+  background: transparent !important;
+  border-bottom: none !important;
+  padding: 18px 28px 6px !important;
+}
+.page-title {
+  color: var(--dj-body-fg) !important;
+  font-size: 22px !important;
+  font-weight: 300 !important;
+  margin: 0 !important;
+}
+.page-pretitle {
+  color: var(--dj-muted) !important;
+  font-size: 11px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 4px;
+}
+
+.page-body {
+  padding: 6px 28px 28px !important;
+}
+
+/* ---------- cards = Django "module" box ---------- */
+.card {
+  background: #fff !important;
+  border: 1px solid var(--dj-border) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+.card-header {
+  background: var(--dj-secondary) !important;
+  color: #fff !important;
+  border-bottom: none !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-radius: 3px 3px 0 0 !important;
+  min-height: auto !important;
+}
+.card-header .card-title,
+.card-header a {
+  color: #fff !important;
+  font-weight: 600 !important;
+  margin: 0;
+}
+.card-body { padding: 14px !important; }
+.card-footer {
+  background: #f8f8f8 !important;
+  border-top: 1px solid var(--dj-border) !important;
+}
+
+/* ---------- tables = changelist ---------- */
+.table, table.table {
+  background: #fff !important;
+  margin-bottom: 0 !important;
+  font-size: 13px !important;
+  color: var(--dj-body-fg) !important;
+}
+.table thead th {
+  background: #f6f6f6 !important;
+  color: var(--dj-body-fg) !important;
+  border-bottom: 1px solid var(--dj-border) !important;
+  border-top: none !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  font-size: 11px !important;
+  letter-spacing: 0.4px;
+  padding: 10px 12px !important;
+}
+.table thead th a { color: var(--dj-body-fg) !important; }
+.table tbody td {
+  border-top: 1px solid var(--dj-soft-border) !important;
+  padding: 9px 12px !important;
+  vertical-align: middle;
+  color: var(--dj-body-fg);
+}
+.table tbody tr:nth-child(even) td { background: var(--dj-row-alt); }
+.table tbody tr:hover td { background: var(--dj-row-hover) !important; }
+.table tbody td a { color: var(--dj-link); font-weight: 500; }
+
+/* ---------- buttons ---------- */
+.btn {
+  border-radius: 3px !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  padding: 6px 14px !important;
+  line-height: 1.4 !important;
+  box-shadow: none !important;
+}
+.btn-primary {
+  background: var(--dj-primary) !important;
+  border-color: var(--dj-primary) !important;
+  color: #fff !important;
+}
+.btn-primary:hover, .btn-primary:focus {
+  background: var(--dj-primary-dark) !important;
+  border-color: var(--dj-primary-dark) !important;
+}
+.btn-success {
+  background: var(--dj-accent) !important;
+  border-color: var(--dj-accent) !important;
+  color: #fff !important;
+}
+.btn-success:hover {
+  background: var(--dj-accent-dark) !important;
+  border-color: var(--dj-accent-dark) !important;
+}
+.btn-danger, .btn-outline-danger {
+  background: var(--dj-delete) !important;
+  border-color: var(--dj-delete) !important;
+  color: #fff !important;
+}
+.btn-danger:hover, .btn-outline-danger:hover {
+  background: #a41515 !important;
+  border-color: #a41515 !important;
+  color: #fff !important;
+}
+.btn-secondary, .btn-outline-secondary {
+  background: #fff !important;
+  border: 1px solid #ccc !important;
+  color: var(--dj-body-fg) !important;
+}
+.btn-secondary:hover { background: #f0f0f0 !important; color: var(--dj-body-fg) !important; }
+
+/* "+ New" button */
+a.btn-primary[href*="/create"] {
+  background: var(--dj-accent) !important;
+  border-color: var(--dj-accent) !important;
+}
+a.btn-primary[href*="/create"]:hover {
+  background: var(--dj-accent-dark) !important;
+  border-color: var(--dj-accent-dark) !important;
+}
+
+/* ---------- forms ---------- */
+.form-label {
+  font-weight: 600 !important;
+  color: var(--dj-body-fg) !important;
+  font-size: 13px !important;
+  padding-top: 6px;
+}
+.form-label.required-label::after {
+  content: " *";
+  color: var(--dj-delete);
+  font-weight: bold;
+}
+.form-control, .form-select {
+  border: 1px solid #ccc !important;
+  border-radius: 3px !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  background: #fff !important;
+  color: var(--dj-body-fg) !important;
+  box-shadow: none !important;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--dj-accent) !important;
+  box-shadow: 0 0 0 2px rgba(121,174,200,0.25) !important;
+  outline: none !important;
+}
+.form-control.is-invalid { border-color: var(--dj-delete) !important; }
+.invalid-feedback { color: var(--dj-delete) !important; font-size: 12px; }
+small.text-muted, .text-muted {
+  color: var(--dj-muted) !important;
+  font-size: 12px !important;
+  font-style: italic;
+}
+
+/* Checkbox multi-select lists (groups / permissions) */
+.form-group ul,
+.col-sm-10 > ul {
+  padding: 6px 10px !important;
+  list-style: none !important;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  background: #fafafa;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+}
+.form-group ul li,
+.col-sm-10 > ul li {
+  display: flex;
+  align-items: center;
+  padding: 3px 0;
+}
+.form-group ul li label,
+.col-sm-10 > ul li label {
+  font-weight: 400 !important;
+  margin-left: 6px;
+  margin-bottom: 0;
+  color: var(--dj-body-fg);
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--dj-accent); }
+
+/* ---------- select2 ---------- */
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple {
+  border: 1px solid #ccc !important;
+  border-radius: 3px !important;
+  min-height: 32px !important;
+}
+.select2-container--default.select2-container--focus .select2-selection {
+  border-color: var(--dj-accent) !important;
+  box-shadow: 0 0 0 2px rgba(121,174,200,0.25);
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background: var(--dj-accent) !important;
+}
+
+/* ---------- alerts ---------- */
+.alert {
+  border-radius: 3px !important;
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  border: 1px solid;
+}
+.alert-success { background: #dfd !important; border-color: #bfb !important; color: #264d26 !important; }
+.alert-warning { background: #ffc !important; border-color: #efe8a1 !important; color: #5b4a00 !important; }
+.alert-danger  { background: #ffefef !important; border-color: var(--dj-delete) !important; color: var(--dj-delete) !important; }
+
+/* ---------- pagination ---------- */
+.pagination .page-link {
+  color: var(--dj-link) !important;
+  border-color: var(--dj-border) !important;
+  border-radius: 0 !important;
+}
+.pagination .page-item.active .page-link {
+  background: var(--dj-accent) !important;
+  border-color: var(--dj-accent) !important;
+  color: #fff !important;
+}
+
+/* ---------- login page ---------- */
+body.dj-login { background: var(--dj-body-bg) !important; }
+.dj-login-wrap {
+  max-width: 28em;
+  margin: 100px auto 40px;
+  background: #fff;
+  border: 1px solid var(--dj-border);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.dj-login-head {
+  background: var(--dj-primary);
+  color: #fff;
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+.dj-login-body { padding: 24px 28px 28px; }
+.dj-login-body .form-label { font-size: 13px; }
+.dj-login-body .btn-primary {
+  width: 100%;
+  padding: 10px !important;
+  font-size: 14px !important;
+  margin-top: 8px;
+}

@@ -1,5 +1,29 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+function authHeaders() {
+  const token = localStorage.getItem('token')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+async function handleResponse(res) {
+  if (res.status === 401) {
+    // Token missing / expired — wipe it and bounce to login.
+    localStorage.removeItem('token')
+    if (typeof window !== 'undefined' && !location.pathname.startsWith('/login')) {
+      location.assign('/login')
+    }
+    throw new Error('Your session has expired. Please sign in again.')
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    const msg = err.detail || 'API request failed'
+    const error = new Error(msg)
+    error.status = res.status
+    throw error
+  }
+  return res.json()
+}
+
 async function fetchAPI(path, params = {}) {
   const url = new URL(`${API_BASE}${path}`)
   Object.entries(params).forEach(([key, val]) => {
@@ -7,12 +31,17 @@ async function fetchAPI(path, params = {}) {
       url.searchParams.set(key, val)
     }
   })
-  const res = await fetch(url.toString())
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }))
-    throw new Error(err.detail || 'API request failed')
-  }
-  return res.json()
+  const res = await fetch(url.toString(), { headers: { ...authHeaders() } })
+  return handleResponse(res)
+}
+
+async function sendJSON(path, method, body) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  return handleResponse(res)
 }
 
 // ─── Dashboard ───
@@ -30,6 +59,10 @@ export const platformAPI = {
   getStats: (slug) => fetchAPI(`/api/platform/${slug}/stats`),
   getPOs: (slug, opts = {}) => fetchAPI(`/api/platform/${slug}/pos`, opts),
   getInventoryMatch: (slug, sku) => fetchAPI(`/api/platform/${slug}/inventory-match`, { sku }),
+  listDispatches: (slug) => fetchAPI(`/api/platform/${slug}/dispatches`),
+  createDispatch: (slug, data) => sendJSON(`/api/platform/${slug}/dispatches`, 'POST', data),
+  deleteDispatch: (slug, id) => sendJSON(`/api/platform/${slug}/dispatches/${id}`, 'DELETE'),
+  clearDispatches: (slug) => sendJSON(`/api/platform/${slug}/dispatches`, 'DELETE'),
 }
 
 // ─── SAP ───

@@ -149,7 +149,9 @@ function FullLoadingWorkflow({ config, addDispatch }) {
     setTotalWeight((prev) => prev - (removed.weight_kg || 0))
   }
 
-  const completeDispatch = () => {
+  const [saving, setSaving] = useState(false)
+
+  const completeDispatch = async () => {
     const result = {
       platform_slug: config.slug,
       platform: config.name,
@@ -163,17 +165,24 @@ function FullLoadingWorkflow({ config, addDispatch }) {
       status: 'dispatched',
       ...dispatchForm,
     }
-    addDispatch(result)
-    setDispatchResult({
-      truckType: truckType?.label,
-      loadedPOs: [...loadedPOs],
-      totalWeight,
-      capacity,
-      fillPct,
-      ...dispatchForm,
-      platform: config.name,
-    })
-    setStep('done')
+    setSaving(true)
+    try {
+      await addDispatch(result)
+      setDispatchResult({
+        truckType: truckType?.label,
+        loadedPOs: [...loadedPOs],
+        totalWeight,
+        capacity,
+        fillPct,
+        ...dispatchForm,
+        platform: config.name,
+      })
+      setStep('done')
+    } catch (err) {
+      window.alert(`Failed to save dispatch: ${err.message}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const resetAll = () => {
@@ -394,8 +403,8 @@ function FullLoadingWorkflow({ config, addDispatch }) {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px', marginTop: '18px' }}>
-            <button className="plat-btn plat-btn-primary" onClick={completeDispatch} disabled={!dispatchForm.vehicle_number}>
-              Dispatch Truck
+            <button className="plat-btn plat-btn-primary" onClick={completeDispatch} disabled={!dispatchForm.vehicle_number || saving}>
+              {saving ? 'Saving...' : 'Dispatch Truck'}
             </button>
             <button className="plat-btn plat-btn-secondary" onClick={() => setStep('loading')}>&larr; Back</button>
           </div>
@@ -435,6 +444,7 @@ function QuickBulkDispatch({ config, addDispatch }) {
   const [notes, setNotes] = useState('')
   const [done, setDone] = useState(false)
   const [dispatchResult, setDispatchResult] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   const handleSearch = (val) => {
     setPOSearch(val)
@@ -466,7 +476,7 @@ function QuickBulkDispatch({ config, addDispatch }) {
   const totalWeight = selectedPOs.reduce((sum, po) => sum + (Number(po[config.weightColumn]) || 0), 0)
   const capacity = truckType?.capacityKg || 0
 
-  const handleDispatch = () => {
+  const handleDispatch = async () => {
     if (!truckType || selectedPOs.length === 0 || !vehicle) return
     const fillPct = capacity > 0 ? Math.min((totalWeight / capacity) * 100, 100) : 0
     const poDetails = selectedPOs.map((po) => ({
@@ -476,39 +486,45 @@ function QuickBulkDispatch({ config, addDispatch }) {
       quantity: po[poQtyCol] ? Number(po[poQtyCol]) : null,
     }))
 
-    // Save to dispatch history
-    addDispatch({
-      platform_slug: config.slug,
-      platform: config.name,
-      mode: 'quick',
-      truck_type: truckType.label,
-      capacity_kg: capacity,
-      loaded_kg: totalWeight,
-      fill_percentage: Math.round(fillPct * 100) / 100,
-      po_count: selectedPOs.length,
-      po_details: poDetails,
-      status: 'dispatched',
-      dispatch_date: new Date().toISOString().split('T')[0],
-      dispatch_time: new Date().toTimeString().slice(0, 5),
-      vehicle_number: vehicle,
-      driver_name: driverName,
-      driver_phone: driverPhone,
-      notes,
-    })
+    setSaving(true)
+    try {
+      await addDispatch({
+        platform_slug: config.slug,
+        platform: config.name,
+        mode: 'quick',
+        truck_type: truckType.label,
+        capacity_kg: capacity,
+        loaded_kg: totalWeight,
+        fill_percentage: Math.round(fillPct * 100) / 100,
+        po_count: selectedPOs.length,
+        po_details: poDetails,
+        status: 'dispatched',
+        dispatch_date: new Date().toISOString().split('T')[0],
+        dispatch_time: new Date().toTimeString().slice(0, 5),
+        vehicle_number: vehicle,
+        driver_name: driverName,
+        driver_phone: driverPhone,
+        notes,
+      })
 
-    setDispatchResult({
-      truckType: truckType.label,
-      loadedPOs: poDetails,
-      totalWeight,
-      capacity,
-      fillPct,
-      vehicle_number: vehicle,
-      driver_name: driverName,
-      driver_phone: driverPhone,
-      notes,
-      platform: config.name,
-    })
-    setDone(true)
+      setDispatchResult({
+        truckType: truckType.label,
+        loadedPOs: poDetails,
+        totalWeight,
+        capacity,
+        fillPct,
+        vehicle_number: vehicle,
+        driver_name: driverName,
+        driver_phone: driverPhone,
+        notes,
+        platform: config.name,
+      })
+      setDone(true)
+    } catch (err) {
+      window.alert(`Failed to save dispatch: ${err.message}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const resetAll = () => {
@@ -689,10 +705,10 @@ function QuickBulkDispatch({ config, addDispatch }) {
         </div>
         <button
           className="plat-btn plat-btn-primary"
-          disabled={!truckType || selectedIds.size === 0 || !vehicle}
+          disabled={!truckType || selectedIds.size === 0 || !vehicle || saving}
           onClick={handleDispatch}
         >
-          Dispatch {selectedIds.size} POs
+          {saving ? 'Saving...' : `Dispatch ${selectedIds.size} POs`}
         </button>
       </div>
     </>

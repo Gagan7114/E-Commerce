@@ -1,61 +1,96 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useRef } from 'react'
+import { platformAPI } from '../lib/api'
 
 const DispatchContext = createContext(null)
 
-const STORAGE_KEY = 'dispatch_history'
-
-function loadFromStorage() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
-}
-
-function saveToStorage(dispatches) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(dispatches))
-}
-
 export function DispatchProvider({ children }) {
-  const [dispatches, setDispatches] = useState(loadFromStorage)
+  // { [slug]: { data: [], loading: bool, error: string|null } }
+  const [byPlatform, setByPlatform] = useState({})
+  const inflight = useRef({})
 
-  const addDispatch = useCallback((dispatch) => {
-    const entry = {
-      id: Date.now().toString(),
-      created_at: new Date().toISOString(),
-      ...dispatch,
-    }
-    setDispatches((prev) => {
-      const updated = [entry, ...prev]
-      saveToStorage(updated)
-      return updated
-    })
-    return entry
+  const loadByPlatform = useCallback(async (slug) => {
+    if (!slug) return
+    if (inflight.current[slug]) return inflight.current[slug]
+
+    setByPlatform((prev) => ({
+      ...prev,
+      [slug]: { ...(prev[slug] || { data: [] }), loading: true, error: null },
+    }))
+
+    const promise = platformAPI
+      .listDispatches(slug)
+      .then((res) => {
+        setByPlatform((prev) => ({
+          ...prev,
+          [slug]: { data: res.data || [], loading: false, error: null },
+        }))
+      })
+      .catch((err) => {
+        setByPlatform((prev) => ({
+          ...prev,
+          [slug]: { data: prev[slug]?.data || [], loading: false, error: err.message },
+        }))
+      })
+      .finally(() => { delete inflight.current[slug] })
+
+    inflight.current[slug] = promise
+    return promise
   }, [])
 
   const getByPlatform = useCallback((slug) => {
-    return dispatches.filter((d) => d.platform_slug === slug)
-  }, [dispatches])
+    return byPlatform[slug]?.data || []
+  }, [byPlatform])
 
-  const deleteDispatch = useCallback((id) => {
-    setDispatches((prev) => {
-      const updated = prev.filter((d) => d.id !== id)
-      saveToStorage(updated)
-      return updated
-    })
+  const getState = useCallback((slug) => {
+    return byPlatform[slug] || { data: [], loading: false, error: null }
+  }, [byPlatform])
+
+  const addDispatch = useCallback(async (entry) => {
+    const slug = entry.platform_slug
+    if (!slug) throw new Error('platform_slug is required')
+    const created = await platformAPI.createDispatch(slug, entry)
+    setByPlatform((prev) => ({
+      ...prev,
+      [slug]: {
+        data: [created, ...(prev[slug]?.data || [])],
+        loading: false,
+        error: null,
+      },
+    }))
+    return created
   }, [])
 
-  const clearAll = useCallback((slug) => {
-    setDispatches((prev) => {
-      const updated = slug ? prev.filter((d) => d.platform_slug !== slug) : []
-      saveToStorage(updated)
-      return updated
-    })
+  const deleteDispatch = useCallback(async (id, slug) => {
+    if (!slug) throw new Error('slug is required to delete a dispatch')
+    await platformAPI.deleteDispatch(slug, id)
+    setByPlatform((prev) => ({
+      ...prev,
+      [slug]: {
+        data: (prev[slug]?.data || []).filter((d) => String(d.id) !== String(id)),
+        loading: false,
+        error: null,
+      },
+    }))
+  }, [])
+
+  const clearAll = useCallback(async (slug) => {
+    if (!slug) return
+    await platformAPI.clearDispatches(slug)
+    setByPlatform((prev) => ({
+      ...prev,
+      [slug]: { data: [], loading: false, error: null },
+    }))
   }, [])
 
   return (
-    <DispatchContext.Provider value={{ dispatches, addDispatch, getByPlatform, deleteDispatch, clearAll }}>
+    <DispatchContext.Provider value={{
+      loadByPlatform,
+      getByPlatform,
+      getState,
+      addDispatch,
+      deleteDispatch,
+      clearAll,
+    }}>
       {children}
     </DispatchContext.Provider>
   )

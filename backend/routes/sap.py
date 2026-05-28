@@ -1,7 +1,13 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException
 from db.sap_hana import query_hana
+from permissions import require_perm
 
-router = APIRouter(prefix="/api/sap", tags=["SAP B1"])
+# All SAP endpoints are reads — gate the whole router behind `sap.view`.
+router = APIRouter(
+    prefix="/api/sap",
+    tags=["SAP B1"],
+    dependencies=[Depends(require_perm("sap.view"))],
+)
 
 # Platform slug → SAP U_Chain values + CardName patterns
 PLATFORM_CHAIN_MAP = {
